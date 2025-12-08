@@ -161,7 +161,23 @@ libbz2-dev liblz4-dev libbluetooth-dev libpython3-dev libssl-dev libgd-dev
 > sudo systemctl disable ModemManager
 > ```
 
-Después de instalar las dependencias, clona el repositorio:
+**Configuración de Permisos de Acceso al Puerto USB:**
+
+Para que tu usuario pueda acceder al puerto USB del Proxmark3 (normalmente `/dev/ttyACM0`) sin necesidad de usar `sudo`, debes añadir tu usuario al grupo `dialout`:
+
+```bash
+sudo usermod -a -G dialout $USER
+```
+
+**Importante:** Después de ejecutar este comando, debes **cerrar sesión y volver a iniciarla** (o reiniciar el sistema) para que los cambios surtan efecto. Puedes verificar que estás en el grupo ejecutando:
+
+```bash
+groups
+```
+
+Deberías ver `dialout` en la lista de grupos.
+
+Después de instalar las dependencias y configurar los permisos, clona el repositorio:
 
 ```bash
 git clone https://github.com/RfidResearchGroup/proxmark3.git
